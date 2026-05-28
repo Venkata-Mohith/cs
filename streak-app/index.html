@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clean — Habit Streak Tracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.13);
+      --text: #f0f0f8;
+      --muted: #7a7a95;
+      --accent: #7c6ff7;
+      --accent-glow: rgba(124,111,247,0.18);
+      --success: #4ade80;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* Background subtle texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,111,247,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+
+    .logo span {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .tagline {
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Streak ring */
+    .streak-ring-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 0 2rem;
+    }
+
+    .ring-container {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin-bottom: 1rem;
+    }
+
+    .ring-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg { fill: none; stroke: var(--surface2); stroke-width: 8; }
+    .ring-fill {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 471;
+      stroke-dashoffset: 471;
+      transition: stroke-dashoffset 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .ring-fill.clean { stroke: var(--success); }
+    .ring-fill.slipped { stroke: var(--danger); }
+
+    .ring-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .streak-number {
+      font-family: 'DM Serif Display', serif;
+      font-size: 3.5rem;
+      line-height: 1;
+      color: var(--text);
+    }
+
+    .streak-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .streak-message {
+      font-size: 0.9rem;
+      color: var(--muted);
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .status-badge.pending { background: rgba(251,191,36,0.12); color: var(--warn); border: 1px solid rgba(251,191,36,0.2); }
+    .status-badge.clean   { background: rgba(74,222,128,0.1);  color: var(--success); border: 1px solid rgba(74,222,128,0.2); }
+    .status-badge.slipped { background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Check-in buttons */
+    .checkin-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn {
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border2);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-icon {
+      font-size: 1.4rem;
+    }
+
+    .btn.btn-clean:hover, .btn.btn-clean.active {
+      background: rgba(74,222,128,0.1);
+      border-color: rgba(74,222,128,0.4);
+      color: var(--success);
+    }
+
+    .btn.btn-slip:hover, .btn.btn-slip.active {
+      background: rgba(248,113,113,0.08);
+      border-color: rgba(248,113,113,0.3);
+      color: var(--danger);
+    }
+
+    .btn.btn-clean.active { box-shadow: 0 0 24px rgba(74,222,128,0.15); }
+
+    /* Already checked in state */
+    .checkin-buttons.done .btn { opacity: 0.5; cursor: default; pointer-events: none; }
+    .checkin-buttons.done .btn.active { opacity: 1; pointer-events: none; }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 0.75rem;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.4rem;
+      color: var(--text);
+    }
+
+    .stat-key {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 2px;
+    }
+
+    /* Calendar grid */
+    .section-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .calendar-section { margin-bottom: 1.5rem; }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      position: relative;
+    }
+
+    .cal-day.clean { background: rgba(74,222,128,0.18); border-color: rgba(74,222,128,0.25); }
+    .cal-day.slipped { background: rgba(248,113,113,0.15); border-color: rgba(248,113,113,0.2); }
+    .cal-day.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-glow); }
+    .cal-day.future { opacity: 0.3; }
+
+    /* Motivation section */
+    .motivation-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      border-left: 2px solid var(--accent);
+    }
+
+    .motivation-quote {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.05rem;
+      line-height: 1.5;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .motivation-source {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* Notification settings */
+    .notif-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .notif-header {
+      padding: 1rem 1.25rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .notif-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .notif-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .notif-row:last-child { border-bottom: none; }
+
+    .notif-info { flex: 1; }
+    .notif-name { font-size: 0.88rem; font-weight: 500; color: var(--text); }
+    .notif-time { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    /* Toggle */
+    .toggle {
+      position: relative;
+      width: 42px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
+    .toggle input:checked + .toggle-slider::before { transform: translate(18px, -50%); background: white; }
+
+    /* Never miss twice banner */
+    .nmb-banner {
+      background: linear-gradient(135deg, rgba(124,111,247,0.12), rgba(124,111,247,0.06));
+      border: 1px solid rgba(124,111,247,0.2);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    .nmb-banner.show { display: block; }
+    .nmb-banner-title { font-size: 0.85rem; font-weight: 600; color: var(--accent); margin-bottom: 0.25rem; }
+    .nmb-banner-text { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      z-index: 100;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Reset button */
+    .reset-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 0.75rem;
+    }
+    .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* Confetti canvas */
+    #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+  </style>
+</head>
+<body>
+
+<canvas id="confetti"></canvas>
+
+<div class="app">
+  <div class="header">
+    <div class="logo">clean<span>streak</span></div>
+    <div class="tagline">one day at a time</div>
+  </div>
+
+  <!-- Status badge -->
+  <div style="text-align:center; margin-bottom:1.5rem;">
+    <div class="status-badge pending" id="statusBadge">
+      <div class="status-dot"></div>
+      <span id="statusText">Check in tonight</span>
+    </div>
+  </div>
+
+  <!-- Streak ring -->
+  <div class="streak-ring-wrap">
+    <div class="ring-container">
+      <svg class="ring-svg" viewBox="0 0 160 160">
+        <circle class="ring-bg" cx="80" cy="80" r="72"/>
+        <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="72"/>
+      </svg>
+      <div class="ring-inner">
+        <div class="streak-number" id="streakNum">0</div>
+        <div class="streak-label">day streak</div>
+      </div>
+    </div>
+    <div class="streak-message" id="streakMsg">Check in tonight to start your streak</div>
+  </div>
+
+  <!-- Never miss twice banner -->
+  <div class="nmb-banner" id="nmbBanner">
+    <div class="nmb-banner-title">⚡ Never miss twice</div>
+    <div class="nmb-banner-text">You slipped yesterday — that's okay. Atomic Habits says one miss is an accident, two is starting a new habit. Get back today.</div>
+  </div>
+
+  <!-- Check-in buttons -->
+  <div class="checkin-buttons" id="checkinBtns">
+    <button class="btn btn-clean" id="btnClean" onclick="checkIn('clean')">
+      <span class="btn-icon">✓</span>
+      <span>I stayed clean today</span>
+    </button>
+    <button class="btn btn-slip" id="btnSlip" onclick="checkIn('slipped')">
+      <span class="btn-icon">↺</span>
+      <span>I slipped today</span>
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-val" id="statBest">0</div>
+      <div class="stat-key">Best streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statTotal">0</div>
+      <div class="stat-key">Clean days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statRate">0%</div>
+      <div class="stat-key">Success rate</div>
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="calendar-section">
+    <div class="section-title">Last 35 days</div>
+    <div class="calendar-grid" id="calGrid"></div>
+  </div>
+
+  <!-- Motivation -->
+  <div class="motivation-card" id="motivCard">
+    <div class="motivation-quote" id="motivQuote">"Every action you take is a vote for the type of person you wish to become."</div>
+    <div class="motivation-source">— James Clear, Atomic Habits</div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="notif-section">
+    <div class="notif-header">
+      <div class="notif-title">Reminders</div>
+    </div>
+    <div class="notif-row">
+      <div class="notif-info">
+        <div class="notif-name">Morning reminder</div>
+        <div class="notif-time">7:00 AM — start your day with intention</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="toggleMorning" onchange="handleNotifToggle('morning', this.checked)" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="notif-row">
+      <div class="notif-info">
+        <div class="notif-name">Evening check-in</div>
+        <div class="notif-time">10:00 PM — time to log your day</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="toggleEvening" onchange="handleNotifToggle('evening', this.checked)" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="notif-row" id="notifPermRow" style="display:none;">
+      <div class="notif-info">
+        <div class="notif-name" style="color:var(--warn);">Enable browser notifications</div>
+        <div class="notif-time">Click to grant permission</div>
+      </div>
+      <button onclick="requestNotifPermission()" style="background:var(--accent);border:none;color:white;padding:6px 14px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;">Allow</button>
+    </div>
+  </div>
+
+  <!-- Reset -->
+  <button class="reset-btn" onclick="confirmReset()">Reset all data</button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const QUOTES = [
+  { q: "Every action you take is a vote for the type of person you wish to become.", s: "James Clear, Atomic Habits" },
+  { q: "You do not rise to the level of your goals. You fall to the level of your systems.", s: "James Clear, Atomic Habits" },
+  { q: "Small habits don't add up, they compound.", s: "James Clear, Atomic Habits" },
+  { q: "The quality of our lives depends on the quality of our habits.", s: "N.J. Lamothe" },
+  { q: "It's not about perfect. It's about effort. When you put in the effort, you earn the right to call yourself strong.", s: "Jillian Michaels" },
+  { q: "Never miss twice. Missing once is an accident. Missing twice is the start of a new habit.", s: "James Clear, Atomic Habits" },
+  { q: "You are what you repeatedly do. Excellence is not an act but a habit.", s: "Aristotle" },
+  { q: "The chains of habit are too weak to be felt until they are too strong to be broken.", s: "Samuel Johnson" },
+  { q: "The secret to getting ahead is getting started.", s: "Mark Twain" },
+];
+
+const MESSAGES = {
+  0: "Check in tonight to start your streak",
+  1: "First day done. Identity begins here.",
+  3: "3 days in. The new you is taking shape.",
+  7: "One week clean. Your brain is rewiring.",
+  14: "Two weeks strong. You are becoming someone different.",
+  21: "21 days — the habit is becoming automatic.",
+  30: "One month. This is who you are now.",
+  60: "Two months of freedom. Remarkable.",
+  90: "90 days. You've fundamentally changed.",
+};
+
+function getState() {
+  const raw = localStorage.getItem('cleanstreak');
+  if (!raw) return { streak: 0, bestStreak: 0, days: {}, lastCheckin: null, notifs: { morning: false, evening: false } };
+  return JSON.parse(raw);
+}
+
+function saveState(s) {
+  localStorage.setItem('cleanstreak', JSON.stringify(s));
+}
+
+function todayKey() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function yesterdayKey() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split('T')[0];
+}
+
+function getStreakMessage(n) {
+  const keys = Object.keys(MESSAGES).map(Number).sort((a,b) => b-a);
+  for (const k of keys) { if (n >= k) return MESSAGES[k]; }
+  return MESSAGES[0];
+}
+
+function render() {
+  const s = getState();
+  const today = todayKey();
+  const yesterday = yesterdayKey();
+  const checkedToday = s.days[today];
+  const checkedYesterday = s.days[yesterday];
+
+  // Streak number
+  document.getElementById('streakNum').textContent = s.streak;
+  document.getElementById('streakMsg').textContent = getStreakMessage(s.streak);
+
+  // Ring progress (max visual at 30 days)
+  const pct = Math.min(s.streak / 30, 1);
+  const circumference = 2 * Math.PI * 72;
+  const ring = document.getElementById('ringFill');
+  ring.style.strokeDashoffset = circumference * (1 - pct);
+  ring.className = 'ring-fill' + (checkedToday === 'clean' ? ' clean' : checkedToday === 'slipped' ? ' slipped' : '');
+
+  // Status badge
+  const badge = document.getElementById('statusBadge');
+  const statusText = document.getElementById('statusText');
+  if (checkedToday === 'clean') {
+    badge.className = 'status-badge clean';
+    statusText.textContent = 'Checked in — stayed clean ✓';
+  } else if (checkedToday === 'slipped') {
+    badge.className = 'status-badge slipped';
+    statusText.textContent = 'Logged — slipped today';
+  } else {
+    badge.className = 'status-badge pending';
+    statusText.textContent = 'Check in before you sleep';
+  }
+
+  // Check-in buttons
+  const btns = document.getElementById('checkinBtns');
+  if (checkedToday) {
+    btns.classList.add('done');
+    if (checkedToday === 'clean') document.getElementById('btnClean').classList.add('active');
+    if (checkedToday === 'slipped') document.getElementById('btnSlip').classList.add('active');
+  } else {
+    btns.classList.remove('done');
+    document.getElementById('btnClean').classList.remove('active');
+    document.getElementById('btnSlip').classList.remove('active');
+  }
+
+  // Never miss twice
+  const nmb = document.getElementById('nmbBanner');
+  if (checkedYesterday === 'slipped' && !checkedToday) {
+    nmb.classList.add('show');
+  } else {
+    nmb.classList.remove('show');
+  }
+
+  // Stats
+  const allDays = Object.values(s.days);
+  const cleanCount = allDays.filter(v => v === 'clean').length;
+  const total = allDays.length;
+  const rate = total > 0 ? Math.round((cleanCount / total) * 100) : 0;
+  document.getElementById('statBest').textContent = s.bestStreak;
+  document.getElementById('statTotal').textContent = cleanCount;
+  document.getElementById('statRate').textContent = rate + '%';
+
+  // Calendar
+  renderCalendar(s);
+
+  // Quote
+  const qi = (cleanCount + s.streak) % QUOTES.length;
+  document.getElementById('motivQuote').textContent = `"${QUOTES[qi].q}"`;
+  document.querySelector('.motivation-source').textContent = `— ${QUOTES[qi].s}`;
+
+  // Notif toggles
+  document.getElementById('toggleMorning').checked = s.notifs?.morning || false;
+  document.getElementById('toggleEvening').checked = s.notifs?.evening || false;
+
+  // Notif permission row
+  if (Notification.permission === 'default') {
+    document.getElementById('notifPermRow').style.display = 'flex';
+  }
+}
+
+function renderCalendar(s) {
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  const today = new Date();
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const status = s.days[key];
+    const isToday = i === 0;
+    const div = document.createElement('div');
+    div.className = 'cal-day' + (status === 'clean' ? ' clean' : status === 'slipped' ? ' slipped' : '') + (isToday ? ' today' : '');
+    div.title = key + (status ? ` — ${status}` : '');
+    grid.appendChild(div);
+  }
+}
+
+function checkIn(type) {
+  const s = getState();
+  const today = todayKey();
+  const yesterday = yesterdayKey();
+  if (s.days[today]) return;
+
+  s.days[today] = type;
+
+  if (type === 'clean') {
+    const prevDayClean = s.days[yesterday] === 'clean' || (!s.days[yesterday] && s.streak > 0);
+    if (s.lastCheckin === yesterday && s.days[yesterday] === 'clean') {
+      s.streak += 1;
+    } else if (s.lastCheckin === yesterday && s.days[yesterday] === 'slipped') {
+      s.streak = 1; // reset but never miss twice
+    } else if (!s.lastCheckin) {
+      s.streak = 1;
+    } else {
+      s.streak = 1;
+    }
+    if (s.streak > s.bestStreak) s.bestStreak = s.streak;
+    s.lastCheckin = today;
+    triggerConfetti();
+    showToast('🎉 Streak extended! Keep going.');
+  } else {
+    s.streak = 0;
+    s.lastCheckin = today;
+    showToast('↺ Logged. Never miss twice — come back stronger tomorrow.');
+  }
+
+  saveState(s);
+  render();
+}
+
+function handleNotifToggle(which, on) {
+  if (on && Notification.permission !== 'granted') {
+    requestNotifPermission(() => {
+      const s = getState();
+      s.notifs = s.notifs || {};
+      s.notifs[which] = on;
+      saveState(s);
+      scheduleNotifs();
+    });
+    return;
+  }
+  const s = getState();
+  s.notifs = s.notifs || {};
+  s.notifs[which] = on;
+  saveState(s);
+  scheduleNotifs();
+}
+
+function requestNotifPermission(cb) {
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') {
+      document.getElementById('notifPermRow').style.display = 'none';
+      showToast('Notifications enabled!');
+      if (cb) cb();
+    } else {
+      showToast('Notifications blocked. Enable in browser settings.');
+      document.getElementById('toggleMorning').checked = false;
+      document.getElementById('toggleEvening').checked = false;
+    }
+  });
+}
+
+function scheduleNotifs() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(reg => {
+      const s = getState();
+      reg.active?.postMessage({ type: 'SET_NOTIFS', notifs: s.notifs });
+    });
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function confirmReset() {
+  if (confirm('Reset all streak data? This cannot be undone.')) {
+    localStorage.removeItem('cleanstreak');
+    render();
+    showToast('Data reset.');
+  }
+}
+
+// Confetti
+function triggerConfetti() {
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const particles = Array.from({length: 80}, () => ({
+    x: Math.random() * canvas.width,
+    y: -10,
+    r: Math.random() * 5 + 3,
+    d: Math.random() * 3 + 1,
+    c: ['#7c6ff7','#4ade80','#fbbf24','#f87171','#60a5fa'][Math.floor(Math.random()*5)],
+    s: Math.random() * 2 - 1,
+    a: Math.random() * 360,
+  }));
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.a * Math.PI / 180);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r * 1.5);
+      ctx.restore();
+      p.y += p.d;
+      p.x += p.s;
+      p.a += 2;
+    });
+    if (frame++ < 90) requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  draw();
+}
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+render();
+</script>
+</body>
+</html>

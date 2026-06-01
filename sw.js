@@ -1,4 +1,4 @@
-const CACHE = 'cleanstreak-v1';
+const CACHE = 'cleanstreak-v2';
 const FILES = ['/', '/index.html'];
 
 self.addEventListener('install', e => {

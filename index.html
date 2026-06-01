@@ -3,26 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clean — Habit Streak Tracker</title>
+  <title>CleanStreak v2</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --surface2: #1a1a26;
-      --border: rgba(255,255,255,0.07);
-      --border2: rgba(255,255,255,0.13);
-      --text: #f0f0f8;
-      --muted: #7a7a95;
+      --bg: #080810;
+      --surface: #111120;
+      --surface2: #181828;
+      --surface3: #1e1e32;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.11);
+      --text: #eeeef8;
+      --muted: #6b6b8a;
+      --muted2: #9090b0;
       --accent: #7c6ff7;
-      --accent-glow: rgba(124,111,247,0.18);
+      --accent-dim: rgba(124,111,247,0.15);
       --success: #4ade80;
+      --success-dim: rgba(74,222,128,0.12);
       --danger: #f87171;
+      --danger-dim: rgba(248,113,113,0.1);
       --warn: #fbbf24;
+      --warn-dim: rgba(251,191,36,0.1);
       --radius: 14px;
       --radius-sm: 8px;
     }
@@ -32,16 +37,14 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100dvh;
-      padding: 0;
       overflow-x: hidden;
     }
 
-    /* Background subtle texture */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,111,247,0.08) 0%, transparent 70%);
+      background: radial-gradient(ellipse 70% 40% at 50% -5%, rgba(124,111,247,0.07) 0%, transparent 65%);
       pointer-events: none;
       z-index: 0;
     }
@@ -51,33 +54,130 @@
       z-index: 1;
       max-width: 480px;
       margin: 0 auto;
-      padding: 2rem 1.25rem 4rem;
+      padding: 1.75rem 1.25rem 5rem;
     }
 
     /* Header */
     .header {
-      text-align: center;
-      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
     }
 
     .logo {
       font-family: 'DM Serif Display', serif;
-      font-size: 1.5rem;
-      letter-spacing: -0.01em;
+      font-size: 1.3rem;
       color: var(--text);
-      margin-bottom: 0.25rem;
     }
 
-    .logo span {
+    .logo em { color: var(--accent); font-style: italic; }
+
+    .version-pill {
+      font-size: 0.68rem;
+      padding: 3px 9px;
+      background: var(--accent-dim);
       color: var(--accent);
-      font-style: italic;
+      border-radius: 999px;
+      border: 1px solid rgba(124,111,247,0.2);
+      letter-spacing: 0.04em;
     }
 
-    .tagline {
-      font-size: 0.8rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
+    /* Goal progress bar */
+    .goal-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .goal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.75rem;
+    }
+
+    .goal-label {
+      font-size: 0.72rem;
       text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+    }
+
+    .goal-count {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .goal-count span { color: var(--muted); font-size: 0.85rem; }
+
+    .progress-track {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .milestone-row {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .milestone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: default;
+    }
+
+    .milestone-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      transition: all 0.3s;
+    }
+
+    .milestone.reached .milestone-dot {
+      background: var(--success);
+      border-color: var(--success);
+      box-shadow: 0 0 6px rgba(74,222,128,0.4);
+    }
+
+    .milestone-label {
+      font-size: 0.62rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .milestone.reached .milestone-label { color: var(--success); }
+
+    /* Science callout */
+    .science-note {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 0.5rem 0 0;
+      line-height: 1.5;
+    }
+
+    .science-note a {
+      color: var(--accent);
+      text-decoration: none;
+      opacity: 0.8;
     }
 
     /* Streak ring */
@@ -85,14 +185,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 0 0 2rem;
+      margin: 0 0 1.5rem;
     }
 
     .ring-container {
       position: relative;
-      width: 180px;
-      height: 180px;
-      margin-bottom: 1rem;
+      width: 160px;
+      height: 160px;
+      margin-bottom: 0.75rem;
     }
 
     .ring-svg {
@@ -101,15 +201,15 @@
       transform: rotate(-90deg);
     }
 
-    .ring-bg { fill: none; stroke: var(--surface2); stroke-width: 8; }
+    .ring-bg { fill: none; stroke: var(--surface2); stroke-width: 7; }
     .ring-fill {
       fill: none;
       stroke: var(--accent);
-      stroke-width: 8;
+      stroke-width: 7;
       stroke-linecap: round;
-      stroke-dasharray: 471;
-      stroke-dashoffset: 471;
-      transition: stroke-dashoffset 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+      stroke-dasharray: 439;
+      stroke-dashoffset: 439;
+      transition: stroke-dashoffset 1s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.4s;
     }
 
     .ring-fill.clean { stroke: var(--success); }
@@ -126,22 +226,21 @@
 
     .streak-number {
       font-family: 'DM Serif Display', serif;
-      font-size: 3.5rem;
+      font-size: 3rem;
       line-height: 1;
-      color: var(--text);
     }
 
     .streak-label {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-top: 0.25rem;
+      margin-top: 3px;
     }
 
     .streak-message {
-      font-size: 0.9rem;
-      color: var(--muted);
+      font-size: 0.85rem;
+      color: var(--muted2);
       text-align: center;
       font-style: italic;
     }
@@ -151,125 +250,153 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 14px;
+      padding: 4px 14px;
       border-radius: 999px;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 500;
-      margin-bottom: 1.5rem;
-      letter-spacing: 0.02em;
+      margin-bottom: 1.25rem;
     }
 
-    .status-badge.pending { background: rgba(251,191,36,0.12); color: var(--warn); border: 1px solid rgba(251,191,36,0.2); }
-    .status-badge.clean   { background: rgba(74,222,128,0.1);  color: var(--success); border: 1px solid rgba(74,222,128,0.2); }
-    .status-badge.slipped { background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+    .status-badge.pending { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(251,191,36,0.18); }
+    .status-badge.clean   { background: var(--success-dim); color: var(--success); border: 1px solid rgba(74,222,128,0.2); }
+    .status-badge.slipped { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(248,113,113,0.18); }
 
-    .status-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: currentColor;
-      animation: pulse 2s infinite;
-    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
     /* Check-in buttons */
     .checkin-buttons {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
 
     .btn {
-      padding: 1rem 1.25rem;
+      padding: 0.9rem 1rem;
       border-radius: var(--radius);
       border: 1.5px solid var(--border2);
       background: var(--surface);
-      color: var(--text);
+      color: var(--muted2);
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
-      text-align: center;
+      gap: 5px;
     }
 
     .btn:active { transform: scale(0.97); }
-
-    .btn-icon {
-      font-size: 1.4rem;
-    }
+    .btn-icon { font-size: 1.3rem; }
 
     .btn.btn-clean:hover, .btn.btn-clean.active {
-      background: rgba(74,222,128,0.1);
-      border-color: rgba(74,222,128,0.4);
+      background: var(--success-dim);
+      border-color: rgba(74,222,128,0.35);
       color: var(--success);
     }
 
     .btn.btn-slip:hover, .btn.btn-slip.active {
-      background: rgba(248,113,113,0.08);
-      border-color: rgba(248,113,113,0.3);
+      background: var(--danger-dim);
+      border-color: rgba(248,113,113,0.28);
       color: var(--danger);
     }
 
-    .btn.btn-clean.active { box-shadow: 0 0 24px rgba(74,222,128,0.15); }
-
-    /* Already checked in state */
-    .checkin-buttons.done .btn { opacity: 0.5; cursor: default; pointer-events: none; }
+    .checkin-buttons.done .btn { opacity: 0.45; cursor: default; pointer-events: none; }
     .checkin-buttons.done .btn.active { opacity: 1; pointer-events: none; }
 
-    /* Stats row */
+    /* Stats */
     .stats-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 8px;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
 
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 0.85rem 0.75rem;
+      padding: 0.8rem 0.6rem;
       text-align: center;
     }
 
     .stat-val {
       font-family: 'DM Serif Display', serif;
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       color: var(--text);
     }
 
     .stat-key {
-      font-size: 0.68rem;
+      font-size: 0.63rem;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.06em;
       margin-top: 2px;
     }
 
-    /* Calendar grid */
-    .section-title {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--muted);
+    /* ─── CALENDAR ─── */
+    .calendar-section { margin-bottom: 1.25rem; }
+
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 0.75rem;
     }
 
-    .calendar-section { margin-bottom: 1.5rem; }
+    .section-title {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    .cal-legend {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.63rem;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 3px;
+    }
+
+    .legend-dot.clean { background: rgba(74,222,128,0.5); }
+    .legend-dot.slipped { background: rgba(248,113,113,0.45); }
+
+    /* Day headers */
+    .cal-day-names {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .cal-day-name {
+      font-size: 0.58rem;
+      text-align: center;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
 
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
+      gap: 4px;
     }
 
     .cal-day {
@@ -277,145 +404,124 @@
       border-radius: 6px;
       background: var(--surface);
       border: 1px solid var(--border);
+      cursor: pointer;
       position: relative;
-    }
-
-    .cal-day.clean { background: rgba(74,222,128,0.18); border-color: rgba(74,222,128,0.25); }
-    .cal-day.slipped { background: rgba(248,113,113,0.15); border-color: rgba(248,113,113,0.2); }
-    .cal-day.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-glow); }
-    .cal-day.future { opacity: 0.3; }
-
-    /* Motivation section */
-    .motivation-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      margin-bottom: 1.5rem;
-      border-left: 2px solid var(--accent);
-    }
-
-    .motivation-quote {
-      font-family: 'DM Serif Display', serif;
-      font-size: 1.05rem;
-      line-height: 1.5;
-      color: var(--text);
-      margin-bottom: 0.5rem;
-    }
-
-    .motivation-source {
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-
-    /* Notification settings */
-    .notif-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      margin-bottom: 1.5rem;
-    }
-
-    .notif-header {
-      padding: 1rem 1.25rem 0.75rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .notif-title {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-    }
-
-    .notif-row {
+      transition: all 0.15s;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0.85rem 1.25rem;
-      border-bottom: 1px solid var(--border);
+      justify-content: center;
     }
 
-    .notif-row:last-child { border-bottom: none; }
-
-    .notif-info { flex: 1; }
-    .notif-name { font-size: 0.88rem; font-weight: 500; color: var(--text); }
-    .notif-time { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
-
-    /* Toggle */
-    .toggle {
-      position: relative;
-      width: 42px;
-      height: 24px;
-      flex-shrink: 0;
-    }
-
-    .toggle input { opacity: 0; width: 0; height: 0; }
-
-    .toggle-slider {
+    .cal-day:hover { border-color: var(--border2); background: var(--surface2); transform: scale(1.05); }
+    .cal-day:active { transform: scale(0.96); }
+    .cal-day.clean  { background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.22); }
+    .cal-day.slipped { background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.18); }
+    .cal-day.today  { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(124,111,247,0.25); }
+    .cal-day.future { opacity: 0.2; pointer-events: none; cursor: default; }
+    .cal-day.milestone-day { border-color: var(--warn); box-shadow: 0 0 0 1px rgba(251,191,36,0.2); }
+    .cal-day.milestone-day::after {
+      content: '★';
       position: absolute;
-      inset: 0;
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      border-radius: 999px;
-      cursor: pointer;
-      transition: 0.2s;
+      top: -6px; right: -5px;
+      font-size: 9px;
+      color: var(--warn);
+      line-height: 1;
     }
 
-    .toggle-slider::before {
-      content: '';
+    .day-num {
+      font-size: 0.58rem;
+      color: var(--muted);
       position: absolute;
-      left: 3px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: var(--muted);
-      transition: 0.2s;
+      bottom: 2px;
+      right: 4px;
     }
 
-    .toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
-    .toggle input:checked + .toggle-slider::before { transform: translate(18px, -50%); background: white; }
+    .cal-day.clean .day-num  { color: rgba(74,222,128,0.6); }
+    .cal-day.slipped .day-num { color: rgba(248,113,113,0.5); }
 
-    /* Never miss twice banner */
-    .nmb-banner {
-      background: linear-gradient(135deg, rgba(124,111,247,0.12), rgba(124,111,247,0.06));
-      border: 1px solid rgba(124,111,247,0.2);
-      border-radius: var(--radius);
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.5rem;
-      display: none;
-    }
-
-    .nmb-banner.show { display: block; }
-    .nmb-banner-title { font-size: 0.85rem; font-weight: 600; color: var(--accent); margin-bottom: 0.25rem; }
-    .nmb-banner-text { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
-
-    /* Toast */
-    .toast {
+    /* Edit modal / tooltip */
+    .day-edit-modal {
       position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      color: var(--text);
-      padding: 0.75rem 1.5rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      z-index: 100;
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      white-space: nowrap;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0 1rem 1.5rem;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
     }
 
-    .toast.show { transform: translateX(-50%) translateY(0); }
+    .day-edit-modal.open {
+      opacity: 1;
+      pointer-events: all;
+    }
 
-    /* Reset button */
-    .reset-btn {
+    .day-edit-sheet {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      padding: 1.5rem 1.25rem 1.25rem;
       width: 100%;
-      padding: 0.75rem;
+      max-width: 440px;
+      transform: translateY(30px);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .day-edit-modal.open .day-edit-sheet { transform: translateY(0); }
+
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: var(--border2);
+      border-radius: 2px;
+      margin: 0 auto 1.25rem;
+    }
+
+    .sheet-date {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+
+    .sheet-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .sheet-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 0.75rem;
+    }
+
+    .sheet-btn {
+      padding: 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border2);
+      background: var(--surface);
+      color: var(--muted2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .sheet-btn:hover { transform: scale(0.98); }
+
+    .sheet-btn.clean  { background: var(--success-dim); border-color: rgba(74,222,128,0.3); color: var(--success); }
+    .sheet-btn.slip   { background: var(--danger-dim); border-color: rgba(248,113,113,0.25); color: var(--danger); }
+
+    .sheet-btn-cancel {
+      width: 100%;
+      padding: 0.7rem;
       background: transparent;
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
@@ -423,12 +529,134 @@
       font-family: 'DM Sans', sans-serif;
       font-size: 0.8rem;
       cursor: pointer;
+    }
+
+    .sheet-btn-clear {
+      width: 100%;
+      padding: 0.6rem;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 4px;
+    }
+
+    /* Never miss twice banner */
+    .nmb-banner {
+      background: rgba(124,111,247,0.08);
+      border: 1px solid rgba(124,111,247,0.18);
+      border-radius: var(--radius);
+      padding: 0.9rem 1.1rem;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+
+    .nmb-banner.show { display: block; }
+    .nmb-title { font-size: 0.82rem; font-weight: 600; color: var(--accent); margin-bottom: 0.25rem; }
+    .nmb-text  { font-size: 0.77rem; color: var(--muted2); line-height: 1.5; }
+
+    /* Motivation */
+    .motivation-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .motivation-quote {
+      font-family: 'DM Serif Display', serif;
+      font-size: 0.98rem;
+      line-height: 1.5;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+
+    .motivation-source { font-size: 0.72rem; color: var(--muted); }
+
+    /* Notifications */
+    .notif-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .notif-header { padding: 0.85rem 1.1rem 0.7rem; border-bottom: 1px solid var(--border); }
+    .notif-title  { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+
+    .notif-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .notif-row:last-child { border-bottom: none; }
+    .notif-name { font-size: 0.85rem; font-weight: 500; color: var(--text); }
+    .notif-time { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      left: 3px; top: 50%;
+      transform: translateY(-50%);
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: 0.2s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
+    .toggle input:checked + .toggle-slider::before { transform: translate(18px, -50%); background: white; }
+
+    /* Reset */
+    .reset-btn {
+      width: 100%;
+      padding: 0.7rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      cursor: pointer;
       transition: all 0.2s;
-      margin-bottom: 0.75rem;
     }
     .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
 
-    /* Confetti canvas */
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 0.65rem 1.4rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      z-index: 300;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
     #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
   </style>
 </head>
@@ -436,17 +664,68 @@
 
 <canvas id="confetti"></canvas>
 
+<!-- Day edit modal / bottom sheet -->
+<div class="day-edit-modal" id="editModal" onclick="closeModal(event)">
+  <div class="day-edit-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-date" id="sheetDate">Monday, Jan 1</div>
+    <div class="sheet-sub" id="sheetSub">Mark this day</div>
+    <div class="sheet-btns">
+      <button class="sheet-btn clean" onclick="editDay('clean')">✓ Stayed clean</button>
+      <button class="sheet-btn slip" onclick="editDay('slipped')">↺ I slipped</button>
+    </div>
+    <button class="sheet-btn-cancel" onclick="closeModal()">Cancel</button>
+    <button class="sheet-btn-clear" id="sheetClearBtn" onclick="editDay(null)">Clear this day</button>
+  </div>
+</div>
+
 <div class="app">
   <div class="header">
-    <div class="logo">clean<span>streak</span></div>
-    <div class="tagline">one day at a time</div>
+    <div class="logo">clean<em>streak</em></div>
+    <div class="version-pill">v2</div>
   </div>
 
-  <!-- Status badge -->
-  <div style="text-align:center; margin-bottom:1.5rem;">
+  <!-- 90-day goal bar -->
+  <div class="goal-section">
+    <div class="goal-header">
+      <div class="goal-label">90-day reset goal</div>
+      <div class="goal-count" id="goalCount">0 <span>/ 90 clean days</span></div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="milestone-row">
+      <div class="milestone" id="m7">
+        <div class="milestone-dot"></div>
+        <div class="milestone-label">7d</div>
+      </div>
+      <div class="milestone" id="m28">
+        <div class="milestone-dot"></div>
+        <div class="milestone-label">28d</div>
+      </div>
+      <div class="milestone" id="m45">
+        <div class="milestone-dot"></div>
+        <div class="milestone-label">45d</div>
+      </div>
+      <div class="milestone" id="m66">
+        <div class="milestone-dot"></div>
+        <div class="milestone-label">66d</div>
+      </div>
+      <div class="milestone" id="m90">
+        <div class="milestone-dot"></div>
+        <div class="milestone-label">90d</div>
+      </div>
+    </div>
+    <div class="science-note" id="scienceNote">
+      Based on UCL research — avg. 66 days for habit automaticity. 90 days stabilizes dopamine pathways.
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div style="text-align:center; margin-bottom:1.1rem;">
     <div class="status-badge pending" id="statusBadge">
       <div class="status-dot"></div>
-      <span id="statusText">Check in tonight</span>
+      <span id="statusText">Check in before you sleep</span>
     </div>
   </div>
 
@@ -454,8 +733,8 @@
   <div class="streak-ring-wrap">
     <div class="ring-container">
       <svg class="ring-svg" viewBox="0 0 160 160">
-        <circle class="ring-bg" cx="80" cy="80" r="72"/>
-        <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="72"/>
+        <circle class="ring-bg" cx="80" cy="80" r="70"/>
+        <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="70"/>
       </svg>
       <div class="ring-inner">
         <div class="streak-number" id="streakNum">0</div>
@@ -467,19 +746,19 @@
 
   <!-- Never miss twice banner -->
   <div class="nmb-banner" id="nmbBanner">
-    <div class="nmb-banner-title">⚡ Never miss twice</div>
-    <div class="nmb-banner-text">You slipped yesterday — that's okay. Atomic Habits says one miss is an accident, two is starting a new habit. Get back today.</div>
+    <div class="nmb-title">⚡ Never miss twice — rule from Atomic Habits</div>
+    <div class="nmb-text">You slipped yesterday. One miss is an accident, two is a new habit. Come back today and protect your momentum.</div>
   </div>
 
   <!-- Check-in buttons -->
   <div class="checkin-buttons" id="checkinBtns">
     <button class="btn btn-clean" id="btnClean" onclick="checkIn('clean')">
       <span class="btn-icon">✓</span>
-      <span>I stayed clean today</span>
+      <span>Stayed clean</span>
     </button>
     <button class="btn btn-slip" id="btnSlip" onclick="checkIn('slipped')">
       <span class="btn-icon">↺</span>
-      <span>I slipped today</span>
+      <span>I slipped</span>
     </button>
   </div>
 
@@ -499,16 +778,34 @@
     </div>
   </div>
 
-  <!-- Calendar -->
+  <!-- Calendar — 90 days, clickable -->
   <div class="calendar-section">
-    <div class="section-title">Last 35 days</div>
+    <div class="cal-header">
+      <div class="section-title">90-day calendar — tap any day to edit</div>
+      <div class="cal-legend">
+        <div class="legend-item"><div class="legend-dot clean"></div>clean</div>
+        <div class="legend-item"><div class="legend-dot slipped"></div>slipped</div>
+      </div>
+    </div>
+    <div class="cal-day-names">
+      <div class="cal-day-name">S</div>
+      <div class="cal-day-name">M</div>
+      <div class="cal-day-name">T</div>
+      <div class="cal-day-name">W</div>
+      <div class="cal-day-name">T</div>
+      <div class="cal-day-name">F</div>
+      <div class="cal-day-name">S</div>
+    </div>
     <div class="calendar-grid" id="calGrid"></div>
+    <div style="text-align:center; margin-top:0.6rem;">
+      <span style="font-size:0.63rem; color:var(--muted);">★ = science milestone &nbsp;·&nbsp; tap any past day to correct it</span>
+    </div>
   </div>
 
   <!-- Motivation -->
-  <div class="motivation-card" id="motivCard">
+  <div class="motivation-card">
     <div class="motivation-quote" id="motivQuote">"Every action you take is a vote for the type of person you wish to become."</div>
-    <div class="motivation-source">— James Clear, Atomic Habits</div>
+    <div class="motivation-source" id="motivSource">— James Clear, Atomic Habits</div>
   </div>
 
   <!-- Notifications -->
@@ -517,9 +814,9 @@
       <div class="notif-title">Reminders</div>
     </div>
     <div class="notif-row">
-      <div class="notif-info">
+      <div>
         <div class="notif-name">Morning reminder</div>
-        <div class="notif-time">7:00 AM — start your day with intention</div>
+        <div class="notif-time">7:00 AM — start with intention</div>
       </div>
       <label class="toggle">
         <input type="checkbox" id="toggleMorning" onchange="handleNotifToggle('morning', this.checked)" />
@@ -527,9 +824,9 @@
       </label>
     </div>
     <div class="notif-row">
-      <div class="notif-info">
+      <div>
         <div class="notif-name">Evening check-in</div>
-        <div class="notif-time">10:00 PM — time to log your day</div>
+        <div class="notif-time">10:00 PM — log your day</div>
       </div>
       <label class="toggle">
         <input type="checkbox" id="toggleEvening" onchange="handleNotifToggle('evening', this.checked)" />
@@ -537,88 +834,127 @@
       </label>
     </div>
     <div class="notif-row" id="notifPermRow" style="display:none;">
-      <div class="notif-info">
+      <div>
         <div class="notif-name" style="color:var(--warn);">Enable browser notifications</div>
-        <div class="notif-time">Click to grant permission</div>
+        <div class="notif-time">Required to receive reminders</div>
       </div>
-      <button onclick="requestNotifPermission()" style="background:var(--accent);border:none;color:white;padding:6px 14px;border-radius:6px;font-size:0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif;">Allow</button>
+      <button onclick="requestNotifPermission()" style="background:var(--accent);border:none;color:white;padding:5px 13px;border-radius:6px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif;">Allow</button>
     </div>
   </div>
 
-  <!-- Reset -->
   <button class="reset-btn" onclick="confirmReset()">Reset all data</button>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
+const GOAL = 90;
+
+const MILESTONES = {
+  7:  { label: "First week — dopamine starts resetting", color: "var(--success)" },
+  28: { label: "28 days — withdrawal symptoms ease for 50% of people", color: "var(--success)" },
+  45: { label: "45 days — halfway. Urges are weakening.", color: "var(--accent)" },
+  66: { label: "66 days — UCL study: habit becomes automatic here", color: "var(--accent)" },
+  90: { label: "90 days — dopamine pathways stabilized. You've rewired your brain.", color: "var(--warn)" },
+};
+
 const QUOTES = [
   { q: "Every action you take is a vote for the type of person you wish to become.", s: "James Clear, Atomic Habits" },
   { q: "You do not rise to the level of your goals. You fall to the level of your systems.", s: "James Clear, Atomic Habits" },
   { q: "Small habits don't add up, they compound.", s: "James Clear, Atomic Habits" },
-  { q: "The quality of our lives depends on the quality of our habits.", s: "N.J. Lamothe" },
-  { q: "It's not about perfect. It's about effort. When you put in the effort, you earn the right to call yourself strong.", s: "Jillian Michaels" },
   { q: "Never miss twice. Missing once is an accident. Missing twice is the start of a new habit.", s: "James Clear, Atomic Habits" },
+  { q: "The secret to sustainable change is focusing on identity, not outcomes.", s: "James Clear, Atomic Habits" },
   { q: "You are what you repeatedly do. Excellence is not an act but a habit.", s: "Aristotle" },
-  { q: "The chains of habit are too weak to be felt until they are too strong to be broken.", s: "Samuel Johnson" },
-  { q: "The secret to getting ahead is getting started.", s: "Mark Twain" },
+  { q: "Most people notice a meaningful reduction in urge intensity within 4–8 weeks of consistent effort.", s: "BetterAddictionCare, 2026" },
+  { q: "It takes an average of 66 days for a new behavior to become automatic.", s: "Dr. Phillippa Lally, UCL (2009)" },
+  { q: "The chains of habit are too light to be felt until they are too heavy to be broken.", s: "Warren Buffett" },
+  { q: "Discipline is choosing what you want most over what you want now.", s: "Abraham Lincoln" },
 ];
 
 const MESSAGES = {
   0: "Check in tonight to start your streak",
   1: "First day done. Identity begins here.",
   3: "3 days in. The new you is taking shape.",
-  7: "One week clean. Your brain is rewiring.",
-  14: "Two weeks strong. You are becoming someone different.",
-  21: "21 days — the habit is becoming automatic.",
-  30: "One month. This is who you are now.",
-  60: "Two months of freedom. Remarkable.",
-  90: "90 days. You've fundamentally changed.",
+  7: "One week. Dopamine is starting to reset.",
+  14: "Two weeks strong. Your brain is rewiring.",
+  21: "21 days — the old loop is weakening.",
+  28: "Four weeks. Urges are easing for most people.",
+  45: "Halfway to 90. You are genuinely different now.",
+  66: "66 days — science says this habit is automatic.",
+  90: "90 days. You have rewired your brain. This is who you are.",
 };
 
 function getState() {
-  const raw = localStorage.getItem('cleanstreak');
-  if (!raw) return { streak: 0, bestStreak: 0, days: {}, lastCheckin: null, notifs: { morning: false, evening: false } };
-  return JSON.parse(raw);
+  try {
+    const raw = localStorage.getItem('cleanstreak_v2');
+    if (!raw) return { streak: 0, bestStreak: 0, days: {}, lastCheckin: null, notifs: { morning: false, evening: false } };
+    return JSON.parse(raw);
+  } catch { return { streak: 0, bestStreak: 0, days: {}, lastCheckin: null, notifs: {} }; }
 }
 
 function saveState(s) {
-  localStorage.setItem('cleanstreak', JSON.stringify(s));
+  localStorage.setItem('cleanstreak_v2', JSON.stringify(s));
 }
 
-function todayKey() {
-  return new Date().toISOString().split('T')[0];
-}
+function todayKey() { return new Date().toISOString().split('T')[0]; }
 
-function yesterdayKey() {
+function offsetKey(n) {
   const d = new Date();
-  d.setDate(d.getDate() - 1);
+  d.setDate(d.getDate() + n);
   return d.toISOString().split('T')[0];
+}
+
+function fmtDate(key) {
+  const d = new Date(key + 'T12:00:00');
+  return d.toLocaleDateString('en-IN', { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
 function getStreakMessage(n) {
   const keys = Object.keys(MESSAGES).map(Number).sort((a,b) => b-a);
-  for (const k of keys) { if (n >= k) return MESSAGES[k]; }
+  for (const k of keys) if (n >= k) return MESSAGES[k];
   return MESSAGES[0];
 }
 
-function render() {
-  const s = getState();
+function recalcStreak(s) {
+  let streak = 0;
+  let d = new Date();
   const today = todayKey();
-  const yesterday = yesterdayKey();
-  const checkedToday = s.days[today];
-  const checkedYesterday = s.days[yesterday];
 
-  // Streak number
+  // Build streak going backwards from today
+  for (let i = 0; i < 365; i++) {
+    const key = offsetKey(-i);
+    if (i === 0 && !s.days[key]) { continue; }
+    if (s.days[key] === 'clean') { streak++; }
+    else if (s.days[key] === 'slipped') { break; }
+    else { if (i > 0) break; }
+  }
+
+  s.streak = streak;
+  const allDays = Object.values(s.days);
+  const cleanCount = allDays.filter(v => v === 'clean').length;
+  if (streak > (s.bestStreak || 0)) s.bestStreak = streak;
+  return s;
+}
+
+function render() {
+  const s = recalcStreak(getState());
+  saveState(s);
+
+  const today = todayKey();
+  const yesterday = offsetKey(-1);
+  const checkedToday = s.days[today];
+  const checkedYest = s.days[yesterday];
+
+  // Streak
   document.getElementById('streakNum').textContent = s.streak;
   document.getElementById('streakMsg').textContent = getStreakMessage(s.streak);
 
-  // Ring progress (max visual at 30 days)
-  const pct = Math.min(s.streak / 30, 1);
-  const circumference = 2 * Math.PI * 72;
+  // Ring (goal = 90 days)
+  const pct = Math.min(s.streak / GOAL, 1);
+  const circ = 2 * Math.PI * 70;
   const ring = document.getElementById('ringFill');
-  ring.style.strokeDashoffset = circumference * (1 - pct);
+  ring.style.strokeDasharray = circ;
+  ring.style.strokeDashoffset = circ * (1 - pct);
   ring.className = 'ring-fill' + (checkedToday === 'clean' ? ' clean' : checkedToday === 'slipped' ? ' slipped' : '');
 
   // Status badge
@@ -635,34 +971,54 @@ function render() {
     statusText.textContent = 'Check in before you sleep';
   }
 
-  // Check-in buttons
+  // Checkin buttons
   const btns = document.getElementById('checkinBtns');
   if (checkedToday) {
     btns.classList.add('done');
-    if (checkedToday === 'clean') document.getElementById('btnClean').classList.add('active');
-    if (checkedToday === 'slipped') document.getElementById('btnSlip').classList.add('active');
+    document.getElementById('btnClean').classList.toggle('active', checkedToday === 'clean');
+    document.getElementById('btnSlip').classList.toggle('active', checkedToday === 'slipped');
   } else {
     btns.classList.remove('done');
     document.getElementById('btnClean').classList.remove('active');
     document.getElementById('btnSlip').classList.remove('active');
   }
 
-  // Never miss twice
+  // NMB banner
   const nmb = document.getElementById('nmbBanner');
-  if (checkedYesterday === 'slipped' && !checkedToday) {
-    nmb.classList.add('show');
-  } else {
-    nmb.classList.remove('show');
-  }
+  nmb.classList.toggle('show', checkedYest === 'slipped' && !checkedToday);
 
   // Stats
   const allDays = Object.values(s.days);
   const cleanCount = allDays.filter(v => v === 'clean').length;
   const total = allDays.length;
   const rate = total > 0 ? Math.round((cleanCount / total) * 100) : 0;
-  document.getElementById('statBest').textContent = s.bestStreak;
+  document.getElementById('statBest').textContent = s.bestStreak || 0;
   document.getElementById('statTotal').textContent = cleanCount;
   document.getElementById('statRate').textContent = rate + '%';
+
+  // Goal bar
+  const pctGoal = Math.min(Math.round((cleanCount / GOAL) * 100), 100);
+  document.getElementById('progressFill').style.width = pctGoal + '%';
+  document.getElementById('goalCount').innerHTML = `${cleanCount} <span>/ ${GOAL} clean days</span>`;
+
+  // Milestone markers
+  const milestoneNums = [7, 28, 45, 66, 90];
+  milestoneNums.forEach(m => {
+    const el = document.getElementById('m' + m);
+    if (el) el.classList.toggle('reached', cleanCount >= m);
+  });
+
+  // Science note update
+  const note = document.getElementById('scienceNote');
+  if (cleanCount >= 90) {
+    note.textContent = "🎉 Goal complete! UCL: habit is automatic. Dopamine pathways stabilized. You've done it.";
+  } else if (cleanCount >= 66) {
+    note.textContent = `${90 - cleanCount} more clean days to complete the 90-day reset. Your habit is nearly automatic.`;
+  } else if (cleanCount >= 28) {
+    note.textContent = `${66 - cleanCount} days to the 66-day mark (UCL: habit automaticity). Keep going.`;
+  } else {
+    note.textContent = "Based on UCL research — avg. 66 days for habit automaticity. 90 days stabilizes dopamine pathways.";
+  }
 
   // Calendar
   renderCalendar(s);
@@ -670,14 +1026,12 @@ function render() {
   // Quote
   const qi = (cleanCount + s.streak) % QUOTES.length;
   document.getElementById('motivQuote').textContent = `"${QUOTES[qi].q}"`;
-  document.querySelector('.motivation-source').textContent = `— ${QUOTES[qi].s}`;
+  document.getElementById('motivSource').textContent = `— ${QUOTES[qi].s}`;
 
   // Notif toggles
   document.getElementById('toggleMorning').checked = s.notifs?.morning || false;
   document.getElementById('toggleEvening').checked = s.notifs?.evening || false;
-
-  // Notif permission row
-  if (Notification.permission === 'default') {
+  if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
     document.getElementById('notifPermRow').style.display = 'flex';
   }
 }
@@ -686,68 +1040,125 @@ function renderCalendar(s) {
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
   const today = new Date();
-  for (let i = 34; i >= 0; i--) {
+
+  // Compute which days have milestones (nth clean day)
+  const milestoneDays = new Set([7, 28, 45, 66, 90]);
+  const cleanDayKeys = Object.keys(s.days)
+    .filter(k => s.days[k] === 'clean')
+    .sort();
+  const milestoneKeySet = new Set();
+  milestoneDays.forEach(m => {
+    if (cleanDayKeys[m - 1]) milestoneKeySet.add(cleanDayKeys[m - 1]);
+  });
+
+  for (let i = 89; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const key = d.toISOString().split('T')[0];
     const status = s.days[key];
     const isToday = i === 0;
+    const isFuture = i < 0;
+
     const div = document.createElement('div');
-    div.className = 'cal-day' + (status === 'clean' ? ' clean' : status === 'slipped' ? ' slipped' : '') + (isToday ? ' today' : '');
-    div.title = key + (status ? ` — ${status}` : '');
+    let cls = 'cal-day';
+    if (status === 'clean') cls += ' clean';
+    if (status === 'slipped') cls += ' slipped';
+    if (isToday) cls += ' today';
+    if (isFuture) cls += ' future';
+    if (milestoneKeySet.has(key)) cls += ' milestone-day';
+    div.className = cls;
+
+    // Day of month label
+    const dayNum = document.createElement('div');
+    dayNum.className = 'day-num';
+    dayNum.textContent = d.getDate();
+    div.appendChild(dayNum);
+
+    div.title = key + (status ? ` — ${status}` : ' — not logged');
+    div.addEventListener('click', () => openEditModal(key, status));
+
     grid.appendChild(div);
   }
 }
 
-function checkIn(type) {
-  const s = getState();
+// ─── Edit modal ───
+let activeEditKey = null;
+
+function openEditModal(key, currentStatus) {
+  activeEditKey = key;
   const today = todayKey();
-  const yesterday = yesterdayKey();
-  if (s.days[today]) return;
+  const isFuture = key > today;
+  if (isFuture) return;
 
-  s.days[today] = type;
+  const modal = document.getElementById('editModal');
+  document.getElementById('sheetDate').textContent = fmtDate(key);
+  document.getElementById('sheetSub').textContent =
+    currentStatus ? `Currently marked: ${currentStatus}` : 'Not logged yet — you can fill this in';
+  document.getElementById('sheetClearBtn').style.display = currentStatus ? 'block' : 'none';
+  modal.classList.add('open');
+}
 
-  if (type === 'clean') {
-    const prevDayClean = s.days[yesterday] === 'clean' || (!s.days[yesterday] && s.streak > 0);
-    if (s.lastCheckin === yesterday && s.days[yesterday] === 'clean') {
-      s.streak += 1;
-    } else if (s.lastCheckin === yesterday && s.days[yesterday] === 'slipped') {
-      s.streak = 1; // reset but never miss twice
-    } else if (!s.lastCheckin) {
-      s.streak = 1;
-    } else {
-      s.streak = 1;
-    }
-    if (s.streak > s.bestStreak) s.bestStreak = s.streak;
-    s.lastCheckin = today;
-    triggerConfetti();
-    showToast('🎉 Streak extended! Keep going.');
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('editModal')) return;
+  document.getElementById('editModal').classList.remove('open');
+  activeEditKey = null;
+}
+
+function editDay(status) {
+  if (!activeEditKey) return;
+  document.getElementById('editModal').classList.remove('open');
+
+  const s = getState();
+  if (status === null) {
+    delete s.days[activeEditKey];
+    showToast('Day cleared');
   } else {
-    s.streak = 0;
-    s.lastCheckin = today;
-    showToast('↺ Logged. Never miss twice — come back stronger tomorrow.');
+    s.days[activeEditKey] = status;
+    if (status === 'clean') {
+      showToast('✓ Marked as clean — good job filling it in!');
+    } else {
+      showToast('Logged as slip. Recalculating...');
+    }
   }
 
+  activeEditKey = null;
   saveState(s);
   render();
 }
 
+// ─── Today check-in ───
+function checkIn(type) {
+  const s = getState();
+  const today = todayKey();
+  if (s.days[today]) return;
+
+  s.days[today] = type;
+  s.lastCheckin = today;
+  saveState(s);
+
+  if (type === 'clean') {
+    triggerConfetti();
+    showToast('🔥 Streak extended! Keep going.');
+  } else {
+    showToast('Logged. Never miss twice — come back tomorrow.');
+  }
+  render();
+}
+
+// ─── Notifications ───
 function handleNotifToggle(which, on) {
-  if (on && Notification.permission !== 'granted') {
-    requestNotifPermission(() => {
-      const s = getState();
-      s.notifs = s.notifs || {};
-      s.notifs[which] = on;
-      saveState(s);
-      scheduleNotifs();
-    });
+  if (on && typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+    requestNotifPermission(() => setNotif(which, on));
     return;
   }
+  setNotif(which, on);
+}
+
+function setNotif(which, on) {
   const s = getState();
   s.notifs = s.notifs || {};
   s.notifs[which] = on;
   saveState(s);
-  scheduleNotifs();
 }
 
 function requestNotifPermission(cb) {
@@ -757,22 +1168,14 @@ function requestNotifPermission(cb) {
       showToast('Notifications enabled!');
       if (cb) cb();
     } else {
-      showToast('Notifications blocked. Enable in browser settings.');
+      showToast('Notifications blocked — enable in browser settings');
       document.getElementById('toggleMorning').checked = false;
       document.getElementById('toggleEvening').checked = false;
     }
   });
 }
 
-function scheduleNotifs() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then(reg => {
-      const s = getState();
-      reg.active?.postMessage({ type: 'SET_NOTIFS', notifs: s.notifs });
-    });
-  }
-}
-
+// ─── Toast ───
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -780,32 +1183,33 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ─── Reset ───
 function confirmReset() {
-  if (confirm('Reset all streak data? This cannot be undone.')) {
-    localStorage.removeItem('cleanstreak');
+  if (confirm('Reset all data? This cannot be undone.')) {
+    localStorage.removeItem('cleanstreak_v2');
     render();
     showToast('Data reset.');
   }
 }
 
-// Confetti
+// ─── Confetti ───
 function triggerConfetti() {
   const canvas = document.getElementById('confetti');
   const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  const particles = Array.from({length: 80}, () => ({
+  const particles = Array.from({length: 70}, () => ({
     x: Math.random() * canvas.width,
     y: -10,
     r: Math.random() * 5 + 3,
-    d: Math.random() * 3 + 1,
+    d: Math.random() * 2.5 + 1,
     c: ['#7c6ff7','#4ade80','#fbbf24','#f87171','#60a5fa'][Math.floor(Math.random()*5)],
     s: Math.random() * 2 - 1,
     a: Math.random() * 360,
   }));
   let frame = 0;
   function draw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     particles.forEach(p => {
       ctx.save();
       ctx.translate(p.x, p.y);
@@ -813,17 +1217,15 @@ function triggerConfetti() {
       ctx.fillStyle = p.c;
       ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r * 1.5);
       ctx.restore();
-      p.y += p.d;
-      p.x += p.s;
-      p.a += 2;
+      p.y += p.d; p.x += p.s; p.a += 2;
     });
     if (frame++ < 90) requestAnimationFrame(draw);
-    else ctx.clearRect(0,0,canvas.width,canvas.height);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
   draw();
 }
 
-// Register service worker
+// Service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }

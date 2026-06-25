@@ -1,84 +1,67 @@
-const CACHE = 'cleanstreak-v2';
-const FILES = ['/', '/index.html'];
+// CleanStreak v4 — Service Worker
+// Handles FCM background push + offline cache
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
-  self.skipWaiting();
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+
+// ── Firebase init (same config as index.html) ──────────────────────────────
+firebase.initializeApp({
+  apiKey: "AIzaSyDOHydBHLiz5FIEzwlaWXLkEwHva_f51vI",
+  authDomain: "cleanstreak-107b4.firebaseapp.com",
+  projectId: "cleanstreak-107b4",
+  storageBucket: "cleanstreak-107b4.firebasestorage.app",
+  messagingSenderId: "126724532219",
+  appId: "1:126724532219:web:3a5f98af4f3778f82e8d5e"
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(clients.claim());
+const messaging = firebase.messaging();
+
+// ── Background push handler ─────────────────────────────────────────────────
+// Fires when app is closed or in background
+messaging.onBackgroundMessage((payload) => {
+  const { title, body, icon } = payload.notification || {};
+  self.registration.showNotification(title || 'CleanStreak', {
+    body: body || '',
+    icon: icon || '/icon-192.png',
+    badge: '/icon-72.png',
+    vibrate: [200, 100, 200],
+    data: payload.data || {},
+    actions: [
+      { action: 'open', title: '✓ Open App' }
+    ]
+  });
 });
 
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
+// ── Notification click ──────────────────────────────────────────────────────
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      if (list.length > 0) return list[0].focus();
+      return clients.openWindow('/');
+    })
   );
 });
 
-// Message from app to set notification schedule
-let notifSettings = { morning: false, evening: false };
+// ── Cache for offline use ───────────────────────────────────────────────────
+const CACHE = 'cs-v4';
+const ASSETS = ['/', '/index.html', '/icon-192.png'];
 
-self.addEventListener('message', e => {
-  if (e.data?.type === 'SET_NOTIFS') {
-    notifSettings = e.data.notifs || {};
-  }
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  self.skipWaiting();
 });
 
-// Daily notification check — runs when SW starts
-function scheduleDailyCheck() {
-  const now = new Date();
-  const morningTime = new Date(now);
-  morningTime.setHours(7, 0, 0, 0);
-  const eveningTime = new Date(now);
-  eveningTime.setHours(22, 0, 0, 0);
+self.addEventListener('activate', (e) => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
 
-  // Check if we should fire morning notif
-  if (notifSettings.morning) {
-    const msUntilMorning = morningTime > now
-      ? morningTime - now
-      : (morningTime.setDate(morningTime.getDate() + 1)) - now;
-    setTimeout(() => {
-      self.registration.showNotification('Good morning 🌅', {
-        body: 'Start strong today. Your streak is waiting.',
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        tag: 'morning',
-        data: { url: '/' },
-      });
-    }, msUntilMorning);
-  }
-
-  if (notifSettings.evening) {
-    const msUntilEvening = eveningTime > now
-      ? eveningTime - now
-      : (eveningTime.setDate(eveningTime.getDate() + 1)) - now;
-    setTimeout(() => {
-      self.registration.showNotification('Evening check-in 🌙', {
-        body: 'How did today go? Log your day and protect your streak.',
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        tag: 'evening',
-        data: { url: '/' },
-        actions: [
-          { action: 'clean', title: '✓ Stayed clean' },
-          { action: 'slip', title: '↺ Slipped' },
-        ],
-      });
-    }, msUntilEvening);
-  }
-}
-
-scheduleDailyCheck();
-
-self.addEventListener('notificationclick', e => {
-  e.notification.close();
-  e.waitUntil(
-    clients.matchAll({ type: 'window' }).then(clientList => {
-      for (const c of clientList) {
-        if (c.url && 'focus' in c) return c.focus();
-      }
-      if (clients.openWindow) return clients.openWindow('/');
-    })
+self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });

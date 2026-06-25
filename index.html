@@ -1,1023 +1,821 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CleanStreak v3</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
-
-  <!-- ════════════════════════════════════════════════════
-       FIREBASE SETUP — YOU MUST REPLACE THIS CONFIG
-       1. Go to console.firebase.google.com
-       2. Create project "cleanstreak"
-       3. Add a Web App → copy the firebaseConfig object
-       4. Enable Google Sign-in under Authentication
-       5. Enable Firestore Database (start in test mode)
-       Replace the placeholder values below with your config.
-  ════════════════════════════════════════════════════ -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  <script>
-   const firebaseConfig = {
-      apiKey:            "AIzaSyDOHydBHLiz5FIEzwlaWXLkEwHva_f51vI",
-      authDomain:        "cleanstreak-107b4.firebaseapp.com",
-      projectId:         "cleanstreak-107b4",
-      storageBucket:     "cleanstreak-107b4.firebasestorage.app",
-      messagingSenderId: "126724532219",
-      appId:             "1:126724532219:web:3a5f98af4f3778f82e8d5e"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-    db.enablePersistence().catch(() => {}); // offline cache
-  </script>
-
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#0a0a0a"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <title>CleanStreak v4</title>
+  <link rel="manifest" href="/manifest.json"/>
   <style>
+    /* ── Reset & tokens ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:          #080810;
-      --surface:     #111120;
-      --surface2:    #181828;
-      --surface3:    #1e1e32;
-      --border:      rgba(255,255,255,0.06);
-      --border2:     rgba(255,255,255,0.11);
-      --text:        #eeeef8;
-      --muted:       #6b6b8a;
-      --muted2:      #9090b0;
-      --accent:      #7c6ff7;
-      --accent-dim:  rgba(124,111,247,0.15);
-      --success:     #4ade80;
-      --success-dim: rgba(74,222,128,0.12);
-      --danger:      #f87171;
-      --danger-dim:  rgba(248,113,113,0.10);
-      --warn:        #fbbf24;
-      --warn-dim:    rgba(251,191,36,0.10);
-      --radius:      14px;
-      --radius-sm:   8px;
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --border: #222;
+      --accent: #e8ff47;      /* electric lime — streak energy */
+      --accent2: #ff6b35;     /* orange — warnings */
+      --text: #f0f0f0;
+      --muted: #666;
+      --clean: #4ade80;
+      --slip: #f87171;
+      --radius: 12px;
+      --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-
     body {
-      font-family: 'DM Sans', sans-serif;
+      font-family: var(--font);
       background: var(--bg);
       color: var(--text);
-      min-height: 100dvh;
-      overflow-x: hidden;
+      min-height: 100vh;
+      overscroll-behavior: none;
     }
 
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background: radial-gradient(ellipse 70% 40% at 50% -5%, rgba(124,111,247,0.07) 0%, transparent 65%);
-      pointer-events: none; z-index: 0;
-    }
-
-    /* ── LOGIN SCREEN ── */
-    #loginScreen {
-      position: fixed; inset: 0; z-index: 100;
+    /* ── Auth screen ────────────────────────────────────────── */
+    #auth-screen {
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      background: var(--bg); padding: 2rem;
-      text-align: center;
+      min-height: 100vh; padding: 2rem; text-align: center; gap: 2rem;
     }
-
-    .login-logo {
-      font-family: 'DM Serif Display', serif;
-      font-size: 2.2rem; margin-bottom: 0.5rem;
+    .logo { font-size: 2rem; font-weight: 800; letter-spacing: -1px; }
+    .logo span { color: var(--accent); }
+    .tagline { color: var(--muted); font-size: 0.9rem; max-width: 260px; }
+    .btn {
+      width: 100%; max-width: 300px; padding: 0.85rem 1.5rem;
+      border: none; border-radius: var(--radius); font-size: 1rem;
+      font-weight: 600; cursor: pointer; transition: opacity 0.15s;
     }
-    .login-logo em { color: var(--accent); font-style: italic; }
+    .btn:active { opacity: 0.8; }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 
-    .login-tagline {
-      font-size: 0.88rem; color: var(--muted2);
-      margin-bottom: 2.5rem; line-height: 1.5;
+    /* ── App shell ──────────────────────────────────────────── */
+    #app { display: none; max-width: 430px; margin: 0 auto; padding-bottom: 80px; }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 1.2rem 0.8rem;
+      position: sticky; top: 0; background: var(--bg); z-index: 10;
+      border-bottom: 1px solid var(--border);
     }
-
-    .login-ring {
-      width: 120px; height: 120px; margin: 0 auto 2rem;
-      position: relative;
-    }
-    .login-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-    .login-ring-bg   { fill: none; stroke: var(--surface2); stroke-width: 7; }
-    .login-ring-fill { fill: none; stroke: var(--accent); stroke-width: 7;
-      stroke-linecap: round; stroke-dasharray: 440; stroke-dashoffset: 330;
-      animation: spinLoad 1.5s ease-in-out infinite alternate; }
-    @keyframes spinLoad {
-      from { stroke-dashoffset: 330; } to { stroke-dashoffset: 100; }
-    }
-
-    .btn-google {
-      display: flex; align-items: center; gap: 12px;
-      padding: 0.9rem 2rem;
-      background: var(--surface2); border: 1.5px solid var(--border2);
-      border-radius: var(--radius); color: var(--text);
-      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
-      cursor: pointer; transition: all 0.2s; margin-bottom: 1rem;
-    }
-    .btn-google:hover { border-color: var(--accent); background: var(--accent-dim); }
-    .btn-google svg { width: 20px; height: 20px; flex-shrink: 0; }
-
-    .btn-offline {
-      background: transparent; border: none;
-      color: var(--muted); font-family: 'DM Sans', sans-serif;
-      font-size: 0.78rem; cursor: pointer; text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
-    /* ── MAIN APP ── */
-    .app {
-      position: relative; z-index: 1;
-      max-width: 480px; margin: 0 auto;
-      padding: 1.75rem 1.25rem 5rem;
-    }
-
-    /* Header */
-    .header {
-      display: flex; align-items: center;
-      justify-content: space-between; margin-bottom: 2rem;
-    }
-    .logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; }
-    .logo em { color: var(--accent); font-style: italic; }
-
-    .header-right { display: flex; align-items: center; gap: 10px; }
-
-    .version-pill {
-      font-size: 0.68rem; padding: 3px 9px;
-      background: var(--accent-dim); color: var(--accent);
-      border-radius: 999px; border: 1px solid rgba(124,111,247,0.2);
-      letter-spacing: 0.04em;
-    }
-
-    .sync-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--muted); transition: background 0.3s;
-    }
-    .sync-dot.synced  { background: var(--success); box-shadow: 0 0 6px rgba(74,222,128,0.4); }
-    .sync-dot.syncing { background: var(--warn); animation: pulse 1s infinite; }
-
-    .user-avatar {
-      width: 30px; height: 30px; border-radius: 50%;
-      border: 1.5px solid var(--border2); cursor: pointer;
-      overflow: hidden; display: flex; align-items: center; justify-content: center;
-      font-size: 0.75rem; font-weight: 600; background: var(--surface2); color: var(--accent);
-    }
-    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-    /* Goal bar */
-    .goal-section {
+    .header-logo { font-size: 1.1rem; font-weight: 800; }
+    .header-logo span { color: var(--accent); }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.1rem 1.25rem; margin-bottom: 1.25rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; cursor: pointer; overflow: hidden;
     }
-    .goal-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; }
-    .goal-label  { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); }
-    .goal-count  { font-family: 'DM Serif Display', serif; font-size: 1.1rem; }
-    .goal-count span { color: var(--muted); font-size: 0.85rem; }
-    .progress-track { height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; margin-bottom: 0.5rem; }
-    .progress-fill  { height: 100%; border-radius: 99px;
-      background: linear-gradient(90deg, var(--accent), var(--success));
-      transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1); }
-    .milestone-row { display: flex; justify-content: space-between; }
-    .milestone { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .milestone-dot { width: 8px; height: 8px; border-radius: 50%;
-      background: var(--surface3); border: 1px solid var(--border2); transition: all 0.3s; }
-    .milestone.reached .milestone-dot { background: var(--success); border-color: var(--success);
-      box-shadow: 0 0 6px rgba(74,222,128,0.4); }
-    .milestone-label { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.04em; }
-    .milestone.reached .milestone-label { color: var(--success); }
-    .science-note { font-size: 0.72rem; color: var(--muted); text-align: center; padding: 0.5rem 0 0; line-height: 1.5; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* Streak ring */
-    .streak-ring-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; }
-    .ring-container { position: relative; width: 160px; height: 160px; margin-bottom: 0.75rem; }
-    .ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-    .ring-bg   { fill: none; stroke: var(--surface2); stroke-width: 7; }
-    .ring-fill { fill: none; stroke: var(--accent); stroke-width: 7;
-      stroke-linecap: round; stroke-dasharray: 439; stroke-dashoffset: 439;
-      transition: stroke-dashoffset 1s cubic-bezier(0.34,1.56,0.64,1), stroke 0.4s; }
-    .ring-fill.clean   { stroke: var(--success); }
-    .ring-fill.slipped { stroke: var(--danger); }
-    .ring-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .streak-number { font-family: 'DM Serif Display', serif; font-size: 3rem; line-height: 1; }
-    .streak-label  { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
-    .streak-message { font-size: 0.85rem; color: var(--muted2); text-align: center; font-style: italic; }
+    /* ── Sections ───────────────────────────────────────────── */
+    section { padding: 1.2rem; border-bottom: 1px solid var(--border); }
 
-    /* Status badge */
-    .status-badge { display: inline-flex; align-items: center; gap: 6px;
-      padding: 4px 14px; border-radius: 999px; font-size: 0.75rem; font-weight: 500; margin-bottom: 1.25rem; }
-    .status-badge.pending { background: var(--warn-dim);    color: var(--warn);    border: 1px solid rgba(251,191,36,0.18); }
-    .status-badge.clean   { background: var(--success-dim); color: var(--success); border: 1px solid rgba(74,222,128,0.2); }
-    .status-badge.slipped { background: var(--danger-dim);  color: var(--danger);  border: 1px solid rgba(248,113,113,0.18); }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    /* ── Streak card ────────────────────────────────────────── */
+    .streak-card {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 1.5rem; text-align: center; position: relative; overflow: hidden;
+    }
+    .streak-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(232,255,71,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .streak-number {
+      font-size: 5rem; font-weight: 900; line-height: 1;
+      color: var(--accent); letter-spacing: -4px;
+    }
+    .streak-label { color: var(--muted); font-size: 0.8rem; margin-top: 0.3rem; letter-spacing: 2px; text-transform: uppercase; }
+    .streak-msg { margin-top: 0.8rem; font-size: 0.9rem; color: var(--text); }
 
-    /* Check-in buttons */
-    .checkin-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
-    .btn { padding: 0.9rem 1rem; border-radius: var(--radius); border: 1.5px solid var(--border2);
-      background: var(--surface); color: var(--muted2);
-      font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;
-      cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-    .btn:active { transform: scale(0.97); }
-    .btn-icon { font-size: 1.3rem; }
-    .btn.btn-clean:hover, .btn.btn-clean.active { background: var(--success-dim); border-color: rgba(74,222,128,0.35); color: var(--success); }
-    .btn.btn-slip:hover,  .btn.btn-slip.active  { background: var(--danger-dim);  border-color: rgba(248,113,113,0.28); color: var(--danger); }
-    .checkin-buttons.done .btn { opacity: 0.45; cursor: default; pointer-events: none; }
-    .checkin-buttons.done .btn.active { opacity: 1; pointer-events: none; }
+    /* ── Check-in ───────────────────────────────────────────── */
+    .checkin-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 1rem; }
+    .btn-clean { background: rgba(74,222,128,0.15); color: var(--clean); border: 1px solid rgba(74,222,128,0.3); border-radius: var(--radius); padding: 0.9rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+    .btn-slip  { background: rgba(248,113,113,0.1);  color: var(--slip);  border: 1px solid rgba(248,113,113,0.2);  border-radius: var(--radius); padding: 0.9rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+    .btn-clean:active, .btn-slip:active { opacity: 0.7; }
 
-    /* Stats */
-    .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1.25rem; }
-    .stat-card { background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 0.8rem 0.6rem; text-align: center; }
-    .stat-val { font-family: 'DM Serif Display', serif; font-size: 1.35rem; }
-    .stat-key { font-size: 0.63rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+    /* ── Stats row ──────────────────────────────────────────── */
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.6rem; }
+    .stat { background: var(--surface); border-radius: 10px; padding: 0.8rem; text-align: center; }
+    .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+    .stat-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
 
-    /* Calendar */
-    .calendar-section { margin-bottom: 1.25rem; }
-    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-    .section-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
-    .cal-legend { display: flex; gap: 10px; align-items: center; }
-    .legend-item { display: flex; align-items: center; gap: 4px; font-size: 0.63rem; color: var(--muted); }
-    .legend-dot { width: 8px; height: 8px; border-radius: 3px; }
-    .legend-dot.clean   { background: rgba(74,222,128,0.5); }
-    .legend-dot.slipped { background: rgba(248,113,113,0.45); }
-    .cal-day-names { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 4px; }
-    .cal-day-name { font-size: 0.58rem; text-align: center; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
-    .cal-day { aspect-ratio: 1; border-radius: 6px; background: var(--surface);
-      border: 1px solid var(--border); cursor: pointer; position: relative;
-      transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
-    .cal-day:hover  { border-color: var(--border2); background: var(--surface2); transform: scale(1.05); }
-    .cal-day.clean  { background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.22); }
-    .cal-day.slipped{ background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.18); }
-    .cal-day.today  { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(124,111,247,0.25); }
-    .cal-day.future { opacity: 0.2; pointer-events: none; }
-    .cal-day.milestone-day { border-color: var(--warn); box-shadow: 0 0 0 1px rgba(251,191,36,0.2); }
-    .cal-day.milestone-day::after { content:'★'; position: absolute; top:-6px; right:-5px; font-size:9px; color:var(--warn); }
-    .day-num { font-size: 0.58rem; color: var(--muted); position: absolute; bottom: 2px; right: 4px; }
-    .cal-day.clean .day-num   { color: rgba(74,222,128,0.6); }
-    .cal-day.slipped .day-num { color: rgba(248,113,113,0.5); }
+    /* ── Calendar ───────────────────────────────────────────── */
+    .section-title { font-size: 0.75rem; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 1rem; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+    .cal-day {
+      aspect-ratio: 1; border-radius: 6px; background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; color: var(--muted); cursor: pointer;
+      border: 1px solid transparent; transition: border-color 0.15s;
+    }
+    .cal-day.clean  { background: rgba(74,222,128,0.2);  color: var(--clean); }
+    .cal-day.slip   { background: rgba(248,113,113,0.15); color: var(--slip); }
+    .cal-day.today  { border-color: var(--accent); color: var(--text); }
+    .cal-day.future { opacity: 0.2; cursor: default; }
 
-    /* Day edit modal */
-    .day-edit-modal { position: fixed; inset: 0; z-index: 200;
-      display: flex; align-items: flex-end; justify-content: center;
-      padding: 0 1rem 1.5rem; background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-    .day-edit-modal.open { opacity: 1; pointer-events: all; }
-    .day-edit-sheet { background: var(--surface2); border: 1px solid var(--border2);
-      border-radius: 20px; padding: 1.5rem 1.25rem 1.25rem;
-      width: 100%; max-width: 440px;
-      transform: translateY(30px); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-    .day-edit-modal.open .day-edit-sheet { transform: translateY(0); }
-    .sheet-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 1.25rem; }
-    .sheet-date { font-family: 'DM Serif Display', serif; font-size: 1.1rem; margin-bottom: 0.25rem; }
-    .sheet-sub  { font-size: 0.78rem; color: var(--muted); margin-bottom: 1.25rem; }
-    .sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0.75rem; }
-    .sheet-btn  { padding: 0.85rem; border-radius: var(--radius-sm); border: 1.5px solid var(--border2);
-      background: var(--surface); color: var(--muted2);
-      font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s; }
-    .sheet-btn.clean { background: var(--success-dim); border-color: rgba(74,222,128,0.3); color: var(--success); }
-    .sheet-btn.slip  { background: var(--danger-dim);  border-color: rgba(248,113,113,0.25); color: var(--danger); }
-    .sheet-btn-cancel { width: 100%; padding: 0.7rem; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; cursor: pointer; }
-    .sheet-btn-clear  { width: 100%; padding: 0.6rem; background: transparent; border: none; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.75rem; cursor: pointer; text-decoration: underline; margin-top: 4px; }
+    /* ── Notion section ─────────────────────────────────────── */
+    .notion-connect {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;
+    }
+    .notion-title { font-weight: 700; font-size: 0.95rem; }
+    .notion-sub { font-size: 0.8rem; color: var(--muted); }
+    .btn-notion {
+      background: #fff; color: #000; border: none; border-radius: 8px;
+      padding: 0.7rem 1rem; font-weight: 700; font-size: 0.85rem;
+      cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+      width: fit-content;
+    }
 
-    /* Never miss twice */
-    .nmb-banner { background: rgba(124,111,247,0.08); border: 1px solid rgba(124,111,247,0.18);
-      border-radius: var(--radius); padding: 0.9rem 1.1rem; margin-bottom: 1.25rem; display: none; }
-    .nmb-banner.show { display: block; }
-    .nmb-title { font-size: 0.82rem; font-weight: 600; color: var(--accent); margin-bottom: 0.25rem; }
-    .nmb-text  { font-size: 0.77rem; color: var(--muted2); line-height: 1.5; }
+    /* Notion page selector */
+    #notion-connected { display: none; flex-direction: column; gap: 0.8rem; }
+    .page-select-label { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+    select {
+      width: 100%; background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.7rem 0.9rem; font-size: 0.9rem; appearance: none;
+      cursor: pointer;
+    }
+    .timetable-preview {
+      background: var(--bg); border-radius: 8px; border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .tp-row {
+      display: grid; grid-template-columns: 90px 1fr;
+      padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+    }
+    .tp-row:last-child { border-bottom: none; }
+    .tp-time { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .tp-block { color: var(--text); }
 
-    /* Motivation */
-    .motivation-card { background: var(--surface); border: 1px solid var(--border);
-      border-left: 2px solid var(--accent); border-radius: var(--radius);
-      padding: 1rem 1.1rem; margin-bottom: 1.25rem; }
-    .motivation-quote  { font-family: 'DM Serif Display', serif; font-size: 0.98rem; line-height: 1.5; margin-bottom: 0.4rem; }
-    .motivation-source { font-size: 0.72rem; color: var(--muted); }
-
-    /* Schedule notifications section */
-    .schedule-section { background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); overflow: hidden; margin-bottom: 1.25rem; }
-    .schedule-header { padding: 0.85rem 1.1rem 0.7rem; border-bottom: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center; }
-    .schedule-title { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-    .master-toggle-wrap { display: flex; align-items: center; gap: 8px; }
-    .master-toggle-label { font-size: 0.72rem; color: var(--muted2); }
-
-    .notif-row { display: flex; align-items: center; justify-content: space-between;
-      padding: 0.75rem 1.1rem; border-bottom: 1px solid var(--border); }
+    /* ── Notifications section ──────────────────────────────── */
+    .notif-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+    }
     .notif-row:last-child { border-bottom: none; }
     .notif-info { flex: 1; }
-    .notif-name { font-size: 0.85rem; font-weight: 500; }
-    .notif-time { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .notif-name { font-size: 0.9rem; font-weight: 600; }
+    .notif-desc { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
 
-    .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    /* Toggle switch */
+    .toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
     .toggle input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; inset: 0; background: var(--surface2);
-      border: 1px solid var(--border2); border-radius: 999px; cursor: pointer; transition: 0.2s; }
-    .toggle-slider::before { content: ''; position: absolute; left: 3px; top: 50%;
-      transform: translateY(-50%); width: 14px; height: 14px; border-radius: 50%;
-      background: var(--muted); transition: 0.2s; }
-    .toggle input:checked + .toggle-slider { background: var(--accent); border-color: var(--accent); }
-    .toggle input:checked + .toggle-slider::before { transform: translate(18px,-50%); background: white; }
-
-    /* User menu */
-    .user-menu { background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); overflow: hidden; margin-bottom: 1.25rem; }
-    .user-menu-row { display: flex; align-items: center; gap: 12px; padding: 1rem 1.1rem; }
-    .user-big-avatar { width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
-      background: var(--surface2); display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; font-weight: 600; color: var(--accent); flex-shrink: 0; }
-    .user-big-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .user-info { flex: 1; }
-    .user-name  { font-size: 0.9rem; font-weight: 500; }
-    .user-email { font-size: 0.72rem; color: var(--muted); }
-
-    .import-btn, .signout-btn {
-      width: 100%; padding: 0.7rem 1.1rem; background: transparent;
-      border: none; border-top: 1px solid var(--border);
-      font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
-      text-align: left; cursor: pointer; transition: background 0.15s;
+    .slider {
+      position: absolute; inset: 0; background: var(--border);
+      border-radius: 13px; cursor: pointer; transition: background 0.2s;
     }
-    .import-btn  { color: var(--accent); }
-    .import-btn:hover  { background: var(--accent-dim); }
-    .signout-btn { color: var(--danger); }
-    .signout-btn:hover { background: var(--danger-dim); }
+    .slider::before {
+      content: ''; position: absolute; width: 20px; height: 20px;
+      left: 3px; top: 3px; background: #fff; border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle input:checked + .slider { background: var(--accent); }
+    .toggle input:checked + .slider::before { transform: translateX(18px); }
 
-    .reset-btn { width: 100%; padding: 0.7rem; background: transparent;
-      border: 1px solid var(--border); border-radius: var(--radius-sm);
-      color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 0.78rem;
-      cursor: pointer; transition: all 0.2s; }
-    .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+    /* ── Bottom nav ─────────────────────────────────────────── */
+    nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: var(--surface); border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: repeat(4,1fr);
+      padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0.2rem; cursor: pointer; padding: 0.4rem;
+      color: var(--muted); font-size: 0.65rem; font-weight: 600;
+      border: none; background: none;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-icon { font-size: 1.3rem; }
 
-    /* Toast */
-    .toast { position: fixed; bottom: 2rem; left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--surface2); border: 1px solid var(--border2);
-      color: var(--text); padding: 0.65rem 1.4rem; border-radius: 999px;
-      font-size: 0.82rem; z-index: 300;
-      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-      white-space: nowrap; pointer-events: none; }
-    .toast.show { transform: translateX(-50%) translateY(0); }
+    /* ── Tabs / panels ──────────────────────────────────────── */
+    .panel { display: none; }
+    .panel.active { display: block; }
 
-    #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+    /* ── Toast ──────────────────────────────────────────────── */
+    #toast {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 0.7rem 1.2rem; border-radius: 20px;
+      font-size: 0.85rem; opacity: 0; transition: all 0.3s; pointer-events: none;
+      white-space: nowrap; z-index: 100;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Profile panel ──────────────────────────────────────── */
+    .profile-card {
+      background: var(--surface); border-radius: var(--radius);
+      padding: 1.5rem; text-align: center; margin-bottom: 1rem;
+    }
+    .profile-avatar {
+      width: 70px; height: 70px; border-radius: 50%;
+      background: var(--border); margin: 0 auto 0.8rem;
+      overflow: hidden; display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+    }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-name { font-weight: 800; font-size: 1.1rem; }
+    .profile-email { color: var(--muted); font-size: 0.8rem; margin-top: 0.2rem; }
+    .danger-zone { margin-top: 1rem; }
+    .btn-danger { background: rgba(248,113,113,0.1); color: var(--slip); border: 1px solid rgba(248,113,113,0.2); border-radius: var(--radius); padding: 0.8rem; width: 100%; font-weight: 700; cursor: pointer; margin-top: 0.5rem; }
+
+    /* ── Progress bar ───────────────────────────────────────── */
+    .progress-wrap { background: var(--surface); border-radius: var(--radius); padding: 1rem; margin-bottom: 0.8rem; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.6rem; }
+    .progress-label span:last-child { color: var(--muted); }
+    .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s; }
+
+    /* milestones */
+    .milestones { display: flex; justify-content: space-between; margin-top: 0.6rem; }
+    .milestone { font-size: 0.65rem; color: var(--muted); text-align: center; }
+    .milestone.reached { color: var(--accent); }
   </style>
 </head>
 <body>
-<canvas id="confetti"></canvas>
 
-<!-- LOGIN SCREEN -->
-<div id="loginScreen">
-  <div class="login-logo">clean<em>streak</em></div>
-  <div class="login-tagline">Your streak follows you everywhere.<br/>Sign in to sync across all devices.</div>
-  <div class="login-ring">
-    <svg viewBox="0 0 120 120">
-      <circle class="login-ring-bg"   cx="60" cy="60" r="52"/>
-      <circle class="login-ring-fill" cx="60" cy="60" r="52"/>
-    </svg>
+<!-- ── Auth Screen ────────────────────────────────────────────── -->
+<div id="auth-screen">
+  <div>
+    <div class="logo">clean<span>streak</span></div>
+    <p class="tagline">Your streak follows you everywhere.</p>
   </div>
-  <button class="btn-google" onclick="signInWithGoogle()">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-    </svg>
-    Continue with Google
-  </button>
-  <button class="btn-offline" onclick="useOffline()">Use without signing in</button>
+  <button class="btn btn-primary" onclick="signIn()">Continue with Google</button>
+  <button class="btn btn-ghost" onclick="useAnonymous()">Use without signing in</button>
 </div>
 
-<!-- MAIN APP -->
-<div class="app" id="mainApp" style="display:none;">
+<!-- ── App ───────────────────────────────────────────────────── -->
+<div id="app">
+  <header>
+    <div class="header-logo">clean<span>streak</span> <small style="color:var(--muted);font-size:0.65rem;font-weight:400">v4</small></div>
+    <div class="avatar" id="avatar-btn" onclick="showPanel('profile')">
+      <span id="avatar-letter">M</span>
+    </div>
+  </header>
 
-  <!-- Day edit modal -->
-  <div class="day-edit-modal" id="editModal" onclick="closeModal(event)">
-    <div class="day-edit-sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-date" id="sheetDate">Monday, Jan 1</div>
-      <div class="sheet-sub"  id="sheetSub">Mark this day</div>
-      <div class="sheet-btns">
-        <button class="sheet-btn clean" onclick="editDay('clean')">✓ Stayed clean</button>
-        <button class="sheet-btn slip"  onclick="editDay('slipped')">↺ I slipped</button>
-      </div>
-      <button class="sheet-btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="sheet-btn-clear" id="sheetClearBtn" onclick="editDay(null)">Clear this day</button>
-    </div>
-  </div>
-
-  <!-- Header -->
-  <div class="header">
-    <div class="logo">clean<em>streak</em></div>
-    <div class="header-right">
-      <div class="sync-dot" id="syncDot" title="Sync status"></div>
-      <div class="version-pill">v3</div>
-      <div class="user-avatar" id="userAvatar" onclick="toggleUserMenu()" title="Account">M</div>
-    </div>
-  </div>
-
-  <!-- User menu (hidden by default) -->
-  <div class="user-menu" id="userMenu" style="display:none;">
-    <div class="user-menu-row">
-      <div class="user-big-avatar" id="bigAvatar">M</div>
-      <div class="user-info">
-        <div class="user-name"  id="userName">Mohith</div>
-        <div class="user-email" id="userEmail">—</div>
-      </div>
-    </div>
-    <button class="import-btn" onclick="importFromV2()">↑ Import v2 local data to cloud</button>
-    <button class="signout-btn" onclick="doSignOut()">Sign out</button>
-  </div>
-
-  <!-- 90-day goal bar -->
-  <div class="goal-section">
-    <div class="goal-header">
-      <div class="goal-label">90-day reset goal</div>
-      <div class="goal-count" id="goalCount">0 <span>/ 90 clean days</span></div>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
-    </div>
-    <div class="milestone-row">
-      <div class="milestone" id="m7" ><div class="milestone-dot"></div><div class="milestone-label">7d</div></div>
-      <div class="milestone" id="m28"><div class="milestone-dot"></div><div class="milestone-label">28d</div></div>
-      <div class="milestone" id="m45"><div class="milestone-dot"></div><div class="milestone-label">45d</div></div>
-      <div class="milestone" id="m66"><div class="milestone-dot"></div><div class="milestone-label">66d</div></div>
-      <div class="milestone" id="m90"><div class="milestone-dot"></div><div class="milestone-label">90d</div></div>
-    </div>
-    <div class="science-note" id="scienceNote">Based on UCL research — avg. 66 days for habit automaticity. 90 days stabilizes dopamine pathways.</div>
-  </div>
-
-  <!-- Status -->
-  <div style="text-align:center; margin-bottom:1.1rem;">
-    <div class="status-badge pending" id="statusBadge">
-      <div class="status-dot"></div>
-      <span id="statusText">Check in before you sleep</span>
-    </div>
-  </div>
-
-  <!-- Streak ring -->
-  <div class="streak-ring-wrap">
-    <div class="ring-container">
-      <svg class="ring-svg" viewBox="0 0 160 160">
-        <circle class="ring-bg"   cx="80" cy="80" r="70"/>
-        <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="70"/>
-      </svg>
-      <div class="ring-inner">
-        <div class="streak-number" id="streakNum">0</div>
+  <!-- ── Home panel ── -->
+  <div class="panel active" id="panel-home">
+    <section>
+      <div class="streak-card">
+        <div class="streak-number" id="streak-count">0</div>
         <div class="streak-label">day streak</div>
+        <div class="streak-msg" id="streak-msg">Check in tonight to start your streak</div>
       </div>
-    </div>
-    <div class="streak-message" id="streakMsg">Check in tonight to start your streak</div>
-  </div>
 
-  <!-- Never miss twice -->
-  <div class="nmb-banner" id="nmbBanner">
-    <div class="nmb-title">⚡ Never miss twice — rule from Atomic Habits</div>
-    <div class="nmb-text">You slipped yesterday. One miss is an accident, two is a new habit. Come back today.</div>
-  </div>
-
-  <!-- Check-in buttons -->
-  <div class="checkin-buttons" id="checkinBtns">
-    <button class="btn btn-clean" id="btnClean" onclick="checkIn('clean')">
-      <span class="btn-icon">✓</span><span>Stayed clean</span>
-    </button>
-    <button class="btn btn-slip" id="btnSlip" onclick="checkIn('slipped')">
-      <span class="btn-icon">↺</span><span>I slipped</span>
-    </button>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-val" id="statBest">0</div><div class="stat-key">Best streak</div></div>
-    <div class="stat-card"><div class="stat-val" id="statTotal">0</div><div class="stat-key">Clean days</div></div>
-    <div class="stat-card"><div class="stat-val" id="statRate">0%</div><div class="stat-key">Success rate</div></div>
-  </div>
-
-  <!-- Calendar -->
-  <div class="calendar-section">
-    <div class="cal-header">
-      <div class="section-title">90-day calendar — tap any day to edit</div>
-      <div class="cal-legend">
-        <div class="legend-item"><div class="legend-dot clean"></div>clean</div>
-        <div class="legend-item"><div class="legend-dot slipped"></div>slipped</div>
+      <div class="progress-wrap" style="margin-top:1rem">
+        <div class="progress-label">
+          <span>90-day goal</span>
+          <span id="progress-text">0 / 90</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="milestones">
+          <div class="milestone" data-day="7">7d</div>
+          <div class="milestone" data-day="21">21d</div>
+          <div class="milestone" data-day="66">66d</div>
+          <div class="milestone" data-day="90">90d</div>
+        </div>
       </div>
-    </div>
-    <div class="cal-day-names">
-      <div class="cal-day-name">S</div><div class="cal-day-name">M</div>
-      <div class="cal-day-name">T</div><div class="cal-day-name">W</div>
-      <div class="cal-day-name">T</div><div class="cal-day-name">F</div>
-      <div class="cal-day-name">S</div>
-    </div>
-    <div class="calendar-grid" id="calGrid"></div>
-    <div style="text-align:center;margin-top:0.6rem;">
-      <span style="font-size:0.63rem;color:var(--muted);">★ = science milestone · tap any past day to correct it</span>
-    </div>
+
+      <div class="checkin-row" id="checkin-row">
+        <button class="btn-clean" onclick="checkIn('clean')">✓ Stayed clean</button>
+        <button class="btn-slip"  onclick="checkIn('slip')">↺ I slipped</button>
+      </div>
+    </section>
+
+    <section>
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val" id="stat-best">0</div><div class="stat-lbl">Best streak</div></div>
+        <div class="stat"><div class="stat-val" id="stat-clean">0</div><div class="stat-lbl">Clean days</div></div>
+        <div class="stat"><div class="stat-val" id="stat-rate">0%</div><div class="stat-lbl">Success rate</div></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">90-day calendar</div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </section>
   </div>
 
-  <!-- Motivation -->
-  <div class="motivation-card">
-    <div class="motivation-quote" id="motivQuote">"The magic you are looking for is in the work you are avoiding."</div>
-    <div class="motivation-source" id="motivSource">— Unknown</div>
+  <!-- ── Schedule panel ── -->
+  <div class="panel" id="panel-schedule">
+    <section>
+      <div class="section-title">Today's Schedule</div>
+      <div id="schedule-content">
+        <p style="color:var(--muted);font-size:0.85rem">Connect Notion in Settings to see your schedule here.</p>
+      </div>
+    </section>
   </div>
 
-  <!-- Schedule notifications (based on your actual timetable) -->
-  <div class="schedule-section">
-    <div class="schedule-header">
-      <div class="schedule-title">Daily Schedule Reminders</div>
-      <div class="master-toggle-wrap">
-        <span class="master-toggle-label">All</span>
+  <!-- ── Settings panel ── -->
+  <div class="panel" id="panel-settings">
+    <section>
+      <div class="section-title">Notion</div>
+      <div class="notion-connect">
+        <div>
+          <div class="notion-title">Connect your Notion</div>
+          <div class="notion-sub">Select any page with a timetable — the app auto-detects it and schedules notifications.</div>
+        </div>
+
+        <!-- Not connected state -->
+        <div id="notion-disconnected">
+          <button class="btn-notion" onclick="connectNotion()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect width="16" height="16" rx="3" fill="#000"/><path d="M4 4h5.5l2.5 3v5H4V4z" fill="#fff"/></svg>
+            Connect Notion
+          </button>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:0.5rem">You'll need a Notion integration token. <a href="https://www.notion.so/my-integrations" target="_blank" style="color:var(--accent)">Get one here →</a></div>
+        </div>
+
+        <!-- Token input (shown after clicking Connect) -->
+        <div id="notion-token-input" style="display:none;flex-direction:column;gap:0.6rem">
+          <input id="token-field" type="password" placeholder="secret_xxxxxx..." style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:0.7rem;font-size:0.85rem;width:100%"/>
+          <button class="btn btn-primary" onclick="saveNotionToken()" style="font-size:0.85rem;padding:0.7rem">Save Token</button>
+          <button class="btn btn-ghost" onclick="cancelNotionConnect()" style="font-size:0.8rem;padding:0.6rem">Cancel</button>
+        </div>
+
+        <!-- Connected state -->
+        <div id="notion-connected">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:0.8rem;color:var(--clean)">✓ Connected</span>
+            <button onclick="disconnectNotion()" style="background:none;border:none;color:var(--muted);font-size:0.75rem;cursor:pointer">Disconnect</button>
+          </div>
+          <div class="page-select-label">Select page to track</div>
+          <select id="page-select" onchange="onPageSelect(this.value)">
+            <option value="">Loading pages...</option>
+          </select>
+          <div id="timetable-preview" class="timetable-preview" style="display:none"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-title">Notifications</div>
+      <div class="notif-row">
+        <div class="notif-info">
+          <div class="notif-name">Schedule reminders</div>
+          <div class="notif-desc">Notify at the start of each block from Notion</div>
+        </div>
         <label class="toggle">
-          <input type="checkbox" id="masterToggle" onchange="toggleAllNotifs(this.checked)"/>
-          <span class="toggle-slider"></span>
+          <input type="checkbox" id="toggle-schedule" onchange="saveNotifPref('schedule', this.checked)"/>
+          <span class="slider"></span>
         </label>
       </div>
-    </div>
-    <div id="scheduleRows"></div>
+      <div class="notif-row">
+        <div class="notif-info">
+          <div class="notif-name">Streak warning</div>
+          <div class="notif-desc">Remind at 9 PM if you haven't checked in</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-streak" onchange="saveNotifPref('streak', this.checked)" checked/>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <button class="btn btn-primary" style="margin-top:1rem;font-size:0.85rem;padding:0.75rem" onclick="enablePush()">Enable Push Notifications</button>
+      <div id="push-status" style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem"></div>
+    </section>
   </div>
 
-  <button class="reset-btn" onclick="confirmReset()">Reset all data</button>
+  <!-- ── Profile panel ── -->
+  <div class="panel" id="panel-profile">
+    <section>
+      <div class="profile-card">
+        <div class="profile-avatar" id="profile-avatar">👤</div>
+        <div class="profile-name" id="profile-name">—</div>
+        <div class="profile-email" id="profile-email">—</div>
+      </div>
+      <div class="danger-zone">
+        <div class="section-title">Danger zone</div>
+        <button class="btn-danger" onclick="resetData()">Reset all data</button>
+        <button class="btn-danger" style="margin-top:0.5rem" onclick="signOut()">Sign out</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ── Bottom nav ── -->
+  <nav>
+    <button class="nav-item active" id="nav-home" onclick="showPanel('home')">
+      <span class="nav-icon">🔥</span>Streak
+    </button>
+    <button class="nav-item" id="nav-schedule" onclick="showPanel('schedule')">
+      <span class="nav-icon">📅</span>Schedule
+    </button>
+    <button class="nav-item" id="nav-settings" onclick="showPanel('settings')">
+      <span class="nav-icon">⚙️</span>Settings
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="showPanel('profile')">
+      <span class="nav-icon">👤</span>Profile
+    </button>
+  </nav>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toast"></div>
+
+<!-- ── Firebase ──────────────────────────────────────────────── -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
 <script>
-// ─── Constants ───────────────────────────────────────────────────────────────
-const GOAL = 90;
-
-const SCHEDULE = [
-  { id: 'leetcode',  name: 'LeetCode',             time: '7:30 AM',  hour: 7,  min: 30, msg: 'LeetCode time. One Easy problem. 20 minutes. No excuses.' },
-  { id: 'namaste',   name: 'Namaste JavaScript',   time: '8:15 AM',  hour: 8,  min: 15, msg: 'Namaste JavaScript. 3 episodes. Open YouTube now.' },
-  { id: 'jobs1',     name: 'Job Applications AM',  time: '9:30 AM',  hour: 9,  min: 30, msg: '3–4 tailored applications. LinkedIn, Naukri, CutShort.' },
-  { id: 'jobs2',     name: 'Job Applications PM',  time: '3:00 PM',  hour: 15, min: 0,  msg: '2–3 more applications. Keep pushing.' },
-  { id: 'checkin',   name: 'CleanStreak Check-in', time: '8:30 PM',  hour: 20, min: 30, msg: 'Log your CleanStreak before you sleep.' },
-  { id: 'review',    name: 'Daily Code Review',    time: '9:30 PM',  hour: 21, min: 30, msg: 'Daily review: can you explain today\'s code out loud?' },
-];
-
-const MILESTONES = { 7:true, 28:true, 45:true, 66:true, 90:true };
-
-const QUOTES = [
-  { q: "The magic you are looking for is in the work you are avoiding.", s: "Unknown" },
-  { q: "Every action you take is a vote for the type of person you wish to become.", s: "James Clear, Atomic Habits" },
-  { q: "You do not rise to the level of your goals. You fall to the level of your systems.", s: "James Clear, Atomic Habits" },
-  { q: "Never miss twice. Missing once is an accident. Missing twice is the start of a new habit.", s: "James Clear, Atomic Habits" },
-  { q: "It takes an average of 66 days for a new behavior to become automatic.", s: "Dr. Phillippa Lally, UCL" },
-  { q: "Discipline is choosing what you want most over what you want now.", s: "Abraham Lincoln" },
-  { q: "You did Hanuman Chalisa for 41 days straight. You have the discipline. Aim it here.", s: "Your own track record" },
-];
-
-const MESSAGES = {
-  0: "Check in tonight to start your streak",
-  1: "First day done. Identity begins here.",
-  3: "3 days in. The new you is taking shape.",
-  7: "One week. Dopamine is starting to reset.",
-  14: "Two weeks strong. Your brain is rewiring.",
-  21: "21 days — the old loop is weakening.",
-  28: "Four weeks. Urges are easing.",
-  45: "Halfway to 90. You are genuinely different now.",
-  66: "66 days — science says this habit is automatic.",
-  90: "90 days. You have rewired your brain.",
+// ── CONFIG — replace with your actual values ────────────────────────────────
+const FB_CONFIG = {
+  apiKey: "AIzaSyDOHydBHLiz5FIEzwlaWXLkEwHva_f51vI",
+  authDomain: "cleanstreak-107b4.firebaseapp.com",
+  projectId: "cleanstreak-107b4",
+  storageBucket: "cleanstreak-107b4.firebasestorage.app",
+  messagingSenderId: "126724532219",
+  appId: "1:126724532219:web:3a5f98af4f3778f82e8d5e"
 };
+const VAPID_KEY = "BLV1tIkOS2I-16tswyiGexIUoBR8Pi9RnCBUIs2Vq9gjWyxZv1G2LHMooVe8aed1cgi7qXm2UTbE5S8FnACkm6E"; // Firebase Console → Cloud Messaging → Web Push certificates
+const NOTION_PROXY = "https://cs-notion.mohithpupppala.workers.dev"; // After deploying cloudflare-worker.js
 
-// ─── State management ─────────────────────────────────────────────────────────
+firebase.initializeApp(FB_CONFIG);
+const auth = firebase.auth();
+const db = firebase.firestore();
+let messaging;
+try { messaging = firebase.messaging(); } catch(e) {}
+
+// ── State ───────────────────────────────────────────────────────────────────
 let currentUser = null;
-let offlineMode  = false;
-let notifTimers  = [];
+let streakData = {};   // { "2025-01-01": "clean" | "slip" }
+let notionToken = localStorage.getItem('notionToken') || null;
+let selectedPageId = localStorage.getItem('notionPageId') || null;
 
-const DEFAULT_STATE = () => ({
-  streak: 0, bestStreak: 0, days: {}, lastCheckin: null,
-  notifs: { master: false, leetcode: false, namaste: false, jobs1: false, jobs2: false, checkin: true, review: false }
-});
-
-function getLocalState() {
-  try {
-    const raw = localStorage.getItem('cleanstreak_v3') || localStorage.getItem('cleanstreak_v2');
-    if (!raw) return DEFAULT_STATE();
-    const s = JSON.parse(raw);
-    if (!s.notifs) s.notifs = DEFAULT_STATE().notifs;
-    return s;
-  } catch { return DEFAULT_STATE(); }
-}
-
-function saveLocalState(s) {
-  localStorage.setItem('cleanstreak_v3', JSON.stringify(s));
-}
-
-// ─── Firebase sync ────────────────────────────────────────────────────────────
-async function saveToFirestore(s) {
-  if (!currentUser || offlineMode) return;
-  setSyncStatus('syncing');
-  try {
-    await db.collection('users').doc(currentUser.uid).set(s);
-    setSyncStatus('synced');
-  } catch (e) {
-    setSyncStatus('offline');
-    console.warn('Firestore save failed:', e);
-  }
-}
-
-async function loadFromFirestore() {
-  if (!currentUser || offlineMode) return getLocalState();
-  setSyncStatus('syncing');
-  try {
-    const doc = await db.collection('users').doc(currentUser.uid).get();
-    setSyncStatus('synced');
-    if (doc.exists) {
-      const s = doc.data();
-      if (!s.notifs) s.notifs = DEFAULT_STATE().notifs;
-      saveLocalState(s);
-      return s;
-    }
-    const local = getLocalState();
-    await saveToFirestore(local);
-    return local;
-  } catch (e) {
-    setSyncStatus('offline');
-    return getLocalState();
-  }
-}
-
-function setSyncStatus(status) {
-  const dot = document.getElementById('syncDot');
-  if (!dot) return;
-  dot.className = 'sync-dot';
-  if (status === 'synced')  dot.classList.add('synced');
-  if (status === 'syncing') dot.classList.add('syncing');
-}
-
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-function signInWithGoogle() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(e => {
-    showToast('Sign-in failed: ' + e.message);
-  });
-}
-
-function useOffline() {
-  offlineMode = true;
-  showApp(null);
-}
-
-function doSignOut() {
-  if (!offlineMode) auth.signOut();
-  currentUser = null; offlineMode = false;
-  document.getElementById('userMenu').style.display = 'none';
-  document.getElementById('mainApp').style.display  = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
-}
-
-auth.onAuthStateChanged(async user => {
-  if (user) {
-    await showApp(user);
-  } else if (!offlineMode) {
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'none';
-  }
-});
-
-async function showApp(user) {
+// ── Auth ────────────────────────────────────────────────────────────────────
+auth.onAuthStateChanged(user => {
   currentUser = user;
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('mainApp').style.display = 'block';
-
   if (user) {
-    const av = document.getElementById('userAvatar');
-    const bigAv = document.getElementById('bigAvatar');
-    document.getElementById('userName').textContent  = user.displayName || 'User';
-    document.getElementById('userEmail').textContent = user.email || '';
+    showApp(user);
+    loadStreak();
+    if (notionToken) showNotionConnected();
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
 
+async function signIn() {
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+  } catch(e) { toast('Sign in failed'); }
+}
+
+function useAnonymous() {
+  // Show app without auth — local only
+  showApp(null);
+  loadStreakLocal();
+}
+
+function showApp(user) {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  if (user) {
+    document.getElementById('avatar-letter').textContent = (user.displayName || 'M')[0].toUpperCase();
+    document.getElementById('profile-name').textContent = user.displayName || 'Anonymous';
+    document.getElementById('profile-email').textContent = user.email || '';
     if (user.photoURL) {
-      av.innerHTML    = `<img src="${user.photoURL}" alt="avatar"/>`;
-      bigAv.innerHTML = `<img src="${user.photoURL}" alt="avatar"/>`;
-    } else {
-      const init = (user.displayName || 'M')[0].toUpperCase();
-      av.textContent    = init;
-      bigAv.textContent = init;
+      document.getElementById('avatar-btn').innerHTML = `<img src="${user.photoURL}"/>`;
+      document.getElementById('profile-avatar').innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
     }
   }
-
-  buildScheduleRows();
-  const s = await loadFromFirestore();
-  renderWithState(s);
-  scheduleNotifications(s);
+  renderCalendar();
+  registerSW();
 }
 
-function toggleUserMenu() {
-  const m = document.getElementById('userMenu');
-  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+async function signOut() {
+  await auth.signOut();
+  localStorage.clear();
 }
 
-// ─── Date helpers ─────────────────────────────────────────────────────────────
-function todayKey()    { return new Date().toISOString().split('T')[0]; }
-function offsetKey(n)  { const d = new Date(); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; }
-function fmtDate(key)  { return new Date(key+'T12:00:00').toLocaleDateString('en-IN',{weekday:'long',month:'short',day:'numeric'}); }
-
-function getStreakMessage(n) {
-  const keys = Object.keys(MESSAGES).map(Number).sort((a,b)=>b-a);
-  for (const k of keys) if (n>=k) return MESSAGES[k];
-  return MESSAGES[0];
+// ── Streak data ─────────────────────────────────────────────────────────────
+async function loadStreak() {
+  if (!currentUser) return loadStreakLocal();
+  const snap = await db.collection('streaks').doc(currentUser.uid)
+    .collection('days').get();
+  streakData = {};
+  snap.forEach(d => { streakData[d.id] = d.data().status; });
+  updateUI();
 }
 
-// ─── Core logic ───────────────────────────────────────────────────────────────
-function recalcStreak(s) {
-  let streak = 0;
-  for (let i = 0; i < 365; i++) {
-    const key = offsetKey(-i);
-    if (i===0 && !s.days[key]) continue;
-    if (s.days[key]==='clean')   { streak++; continue; }
-    if (s.days[key]==='slipped') { break; }
-    if (i > 0) break;
-  }
-  s.streak = streak;
-  if (streak > (s.bestStreak||0)) s.bestStreak = streak;
-  return s;
+function loadStreakLocal() {
+  streakData = JSON.parse(localStorage.getItem('streakData') || '{}');
+  updateUI();
 }
 
-async function persistState(s) {
-  saveLocalState(s);
-  await saveToFirestore(s);
-}
-
-async function checkIn(type) {
-  const s = recalcStreak(getLocalState());
+async function checkIn(status) {
   const today = todayKey();
-  if (s.days[today]) return;
-  s.days[today]   = type;
-  s.lastCheckin   = today;
-  await persistState(s);
-  if (type==='clean') { triggerConfetti(); showToast('🔥 Streak extended! Keep going.'); }
-  else showToast('Logged. Never miss twice — come back tomorrow.');
-  renderWithState(s);
-  scheduleNotifications(s);
-}
-
-// ─── Edit modal ───────────────────────────────────────────────────────────────
-let activeEditKey = null;
-
-function openEditModal(key, status) {
-  if (key > todayKey()) return;
-  activeEditKey = key;
-  document.getElementById('sheetDate').textContent = fmtDate(key);
-  document.getElementById('sheetSub').textContent  = status ? `Currently: ${status}` : 'Not logged yet';
-  document.getElementById('sheetClearBtn').style.display = status ? 'block' : 'none';
-  document.getElementById('editModal').classList.add('open');
-}
-
-function closeModal(e) {
-  if (e && e.target !== document.getElementById('editModal')) return;
-  document.getElementById('editModal').classList.remove('open');
-  activeEditKey = null;
-}
-
-async function editDay(status) {
-  if (!activeEditKey) return;
-  document.getElementById('editModal').classList.remove('open');
-  const s = recalcStreak(getLocalState());
-  if (status===null) { delete s.days[activeEditKey]; showToast('Day cleared'); }
-  else               { s.days[activeEditKey]=status;  showToast(status==='clean'?'✓ Marked clean':'Logged as slip'); }
-  activeEditKey = null;
-  await persistState(s);
-  renderWithState(s);
-}
-
-// ─── V2 import ────────────────────────────────────────────────────────────────
-async function importFromV2() {
-  const raw = localStorage.getItem('cleanstreak_v2');
-  if (!raw) { showToast('No v2 data found locally'); return; }
-  if (!confirm('Import v2 data and sync to cloud? This will merge with existing data.')) return;
-  const v2 = JSON.parse(raw);
-  const s  = recalcStreak(getLocalState());
-  s.days = { ...v2.days, ...s.days }; // v3 takes priority for conflicts
-  s.bestStreak = Math.max(s.bestStreak||0, v2.bestStreak||0);
-  await persistState(s);
-  renderWithState(s);
-  showToast('v2 data imported and synced ✓');
-}
-
-// ─── Notifications ────────────────────────────────────────────────────────────
-function buildScheduleRows() {
-  const container = document.getElementById('scheduleRows');
-  container.innerHTML = '';
-  SCHEDULE.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'notif-row';
-    row.innerHTML = `
-      <div class="notif-info">
-        <div class="notif-name">${item.name}</div>
-        <div class="notif-time">${item.time}</div>
-      </div>
-      <label class="toggle">
-        <input type="checkbox" id="notif_${item.id}" onchange="handleScheduleToggle('${item.id}', this.checked)"/>
-        <span class="toggle-slider"></span>
-      </label>`;
-    container.appendChild(row);
-  });
-}
-
-function handleScheduleToggle(id, on) {
-  if (on && typeof Notification!=='undefined' && Notification.permission!=='granted') {
-    Notification.requestPermission().then(p => {
-      if (p==='granted') { saveNotifPref(id,on); showToast('Notifications enabled!'); }
-      else { document.getElementById('notif_'+id).checked=false; showToast('Enable notifications in browser settings'); }
-    });
-    return;
-  }
-  saveNotifPref(id, on);
-}
-
-function toggleAllNotifs(on) {
-  if (on && typeof Notification!=='undefined' && Notification.permission!=='granted') {
-    Notification.requestPermission().then(p => {
-      if (p==='granted') { SCHEDULE.forEach(i=>{ document.getElementById('notif_'+i.id).checked=on; saveNotifPref(i.id,on); }); }
-      else { document.getElementById('masterToggle').checked=false; showToast('Enable notifications in browser settings'); }
-    });
-    return;
-  }
-  SCHEDULE.forEach(i => { document.getElementById('notif_'+i.id).checked=on; saveNotifPref(i.id,on); });
-}
-
-async function saveNotifPref(id, on) {
-  const s = getLocalState();
-  s.notifs = s.notifs || DEFAULT_STATE().notifs;
-  s.notifs[id] = on;
-  await persistState(s);
-  scheduleNotifications(s);
-}
-
-function scheduleNotifications(s) {
-  notifTimers.forEach(clearTimeout);
-  notifTimers = [];
-  if (typeof Notification==='undefined' || Notification.permission!=='granted') return;
-  const now  = new Date();
-  const notifs = s.notifs || {};
-  SCHEDULE.forEach(item => {
-    if (!notifs[item.id] && !notifs.master) return;
-    const target = new Date();
-    target.setHours(item.hour, item.min, 0, 0);
-    if (target <= now) return; // already passed today
-    const ms = target - now;
-    const t = setTimeout(() => {
-      new Notification('CleanStreak', { body: item.msg, icon: '/icon-192.png', tag: item.id });
-    }, ms);
-    notifTimers.push(t);
-  });
-}
-
-// ─── Render ───────────────────────────────────────────────────────────────────
-function renderWithState(rawS) {
-  const s = recalcStreak(rawS);
-  const today     = todayKey();
-  const yesterday = offsetKey(-1);
-  const checkedToday = s.days[today];
-  const checkedYest  = s.days[yesterday];
-
-  // Streak ring
-  document.getElementById('streakNum').textContent  = s.streak;
-  document.getElementById('streakMsg').textContent  = getStreakMessage(s.streak);
-  const pct  = Math.min(s.streak/GOAL, 1);
-  const circ = 2*Math.PI*70;
-  const ring = document.getElementById('ringFill');
-  ring.style.strokeDasharray  = circ;
-  ring.style.strokeDashoffset = circ*(1-pct);
-  ring.className = 'ring-fill' + (checkedToday==='clean'?' clean': checkedToday==='slipped'?' slipped':'');
-
-  // Status badge
-  const badge = document.getElementById('statusBadge');
-  const st    = document.getElementById('statusText');
-  if      (checkedToday==='clean')   { badge.className='status-badge clean';   st.textContent='Checked in — stayed clean ✓'; }
-  else if (checkedToday==='slipped') { badge.className='status-badge slipped'; st.textContent='Logged — slipped today'; }
-  else                               { badge.className='status-badge pending'; st.textContent='Check in before you sleep'; }
-
-  // Buttons
-  const btns = document.getElementById('checkinBtns');
-  if (checkedToday) {
-    btns.classList.add('done');
-    document.getElementById('btnClean').classList.toggle('active', checkedToday==='clean');
-    document.getElementById('btnSlip').classList.toggle('active',  checkedToday==='slipped');
+  streakData[today] = status;
+  if (currentUser) {
+    await db.collection('streaks').doc(currentUser.uid)
+      .collection('days').doc(today).set({ status, ts: Date.now() });
+    // Update user doc for Cloud Function
+    await db.collection('users').doc(currentUser.uid).set({
+      fcmToken: localStorage.getItem('fcmToken') || null,
+      notionToken: notionToken,
+      notionConnected: !!notionToken,
+      selectedPageId: selectedPageId
+    }, { merge: true });
   } else {
-    btns.classList.remove('done');
-    document.getElementById('btnClean').classList.remove('active');
-    document.getElementById('btnSlip').classList.remove('active');
+    localStorage.setItem('streakData', JSON.stringify(streakData));
   }
-
-  // NMB banner
-  document.getElementById('nmbBanner').classList.toggle('show', checkedYest==='slipped' && !checkedToday);
-
-  // Stats
-  const allDays   = Object.values(s.days);
-  const cleanDays = allDays.filter(v=>v==='clean');
-  const total     = allDays.length;
-  const rate      = total>0 ? Math.round((cleanDays.length/total)*100) : 0;
-  document.getElementById('statBest').textContent  = s.bestStreak||0;
-  document.getElementById('statTotal').textContent = cleanDays.length;
-  document.getElementById('statRate').textContent  = rate+'%';
-
-  // Goal bar
-  const pctGoal = Math.min(Math.round((cleanDays.length/GOAL)*100),100);
-  document.getElementById('progressFill').style.width = pctGoal+'%';
-  document.getElementById('goalCount').innerHTML = `${cleanDays.length} <span>/ ${GOAL} clean days</span>`;
-
-  // Milestones
-  [7,28,45,66,90].forEach(m => {
-    const el = document.getElementById('m'+m);
-    if (el) el.classList.toggle('reached', cleanDays.length>=m);
-  });
-
-  // Science note
-  const note = document.getElementById('scienceNote');
-  if      (cleanDays.length>=90) note.textContent = '🎉 90 days complete. Dopamine pathways stabilized. You did it.';
-  else if (cleanDays.length>=66) note.textContent = `${90-cleanDays.length} more clean days to complete the 90-day reset.`;
-  else if (cleanDays.length>=28) note.textContent = `${66-cleanDays.length} days to the 66-day mark (UCL: habit automaticity).`;
-  else                           note.textContent = 'Based on UCL research — avg. 66 days for habit automaticity.';
-
-  // Calendar
-  renderCalendar(s);
-
-  // Quote
-  const qi = (cleanDays.length + s.streak) % QUOTES.length;
-  document.getElementById('motivQuote').textContent  = `"${QUOTES[qi].q}"`;
-  document.getElementById('motivSource').textContent = `— ${QUOTES[qi].s}`;
-
-  // Notification toggles
-  const notifs = s.notifs || {};
-  SCHEDULE.forEach(item => {
-    const el = document.getElementById('notif_'+item.id);
-    if (el) el.checked = !!notifs[item.id];
-  });
-  const masterEl = document.getElementById('masterToggle');
-  if (masterEl) masterEl.checked = SCHEDULE.every(i=>!!notifs[i.id]);
+  updateUI();
+  toast(status === 'clean' ? '✓ Clean day logged' : 'Logged. Never miss twice.');
 }
 
-function renderCalendar(s) {
-  const grid  = document.getElementById('calGrid');
+// ── UI update ───────────────────────────────────────────────────────────────
+function updateUI() {
+  const streak = calcStreak();
+  const cleanDays = Object.values(streakData).filter(v => v === 'clean').length;
+  const total = Object.keys(streakData).length;
+  const rate = total > 0 ? Math.round(cleanDays / total * 100) : 0;
+  const best = calcBest();
+
+  document.getElementById('streak-count').textContent = streak;
+  document.getElementById('stat-best').textContent = best;
+  document.getElementById('stat-clean').textContent = cleanDays;
+  document.getElementById('stat-rate').textContent = rate + '%';
+  document.getElementById('progress-text').textContent = `${cleanDays} / 90`;
+  document.getElementById('progress-fill').style.width = Math.min(cleanDays/90*100, 100) + '%';
+
+  // Milestone highlight
+  document.querySelectorAll('.milestone').forEach(m => {
+    m.classList.toggle('reached', cleanDays >= parseInt(m.dataset.day));
+  });
+
+  // Streak message
+  const msgs = [
+    'Check in tonight to start your streak',
+    '⚡ Never miss twice — Atomic Habits',
+    '🔥 Keep going!',
+    '💪 One week strong!',
+    '🌟 21 days — habit forming!',
+    '🧠 66 days — automaticity!'
+  ];
+  const today = streakData[todayKey()];
+  const msgEl = document.getElementById('streak-msg');
+  if (today) {
+    msgEl.textContent = today === 'clean' ? '✓ Checked in today' : 'You slipped. Come back tomorrow.';
+  } else {
+    msgEl.textContent = streak === 0 ? msgs[0] : msgs[1];
+  }
+
+  renderCalendar();
+}
+
+function calcStreak() {
+  let count = 0;
+  const d = new Date();
+  // Check yesterday if today not logged yet
+  if (!streakData[todayKey()]) d.setDate(d.getDate() - 1);
+  while (true) {
+    const k = dateKey(d);
+    if (streakData[k] !== 'clean') break;
+    count++;
+    d.setDate(d.getDate() - 1);
+  }
+  return count;
+}
+
+function calcBest() {
+  let best = 0, cur = 0;
+  const keys = Object.keys(streakData).sort();
+  for (const k of keys) {
+    if (streakData[k] === 'clean') { cur++; best = Math.max(best, cur); }
+    else cur = 0;
+  }
+  return best;
+}
+
+function renderCalendar() {
+  const grid = document.getElementById('cal-grid');
   grid.innerHTML = '';
   const today = new Date();
-
-  const cleanKeys = Object.keys(s.days).filter(k=>s.days[k]==='clean').sort();
-  const milestoneKeySet = new Set();
-  [7,28,45,66,90].forEach(m => { if (cleanKeys[m-1]) milestoneKeySet.add(cleanKeys[m-1]); });
-
-  for (let i=89; i>=0; i--) {
-    const d   = new Date(today); d.setDate(today.getDate()-i);
-    const key = d.toISOString().split('T')[0];
-    const status  = s.days[key];
-    const isToday = i===0;
-
+  // Show last 90 days
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const k = dateKey(d);
+    const status = streakData[k];
     const div = document.createElement('div');
-    let cls = 'cal-day';
-    if (status==='clean')   cls+=' clean';
-    if (status==='slipped') cls+=' slipped';
-    if (isToday) cls+=' today';
-    if (milestoneKeySet.has(key)) cls+=' milestone-day';
-    div.className = cls;
-
-    const dn = document.createElement('div');
-    dn.className   = 'day-num';
-    dn.textContent = d.getDate();
-    div.appendChild(dn);
-    div.addEventListener('click', ()=>openEditModal(key, status));
+    div.className = 'cal-day' + (status === 'clean' ? ' clean' : status === 'slip' ? ' slip' : '') + (i === 0 ? ' today' : '');
+    div.textContent = d.getDate();
+    div.onclick = () => { if (i === 0) return; };
     grid.appendChild(div);
   }
 }
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3000);
+// ── Panel navigation ────────────────────────────────────────────────────────
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('nav-' + name)?.classList.add('active');
 }
 
-// ─── Reset ────────────────────────────────────────────────────────────────────
-async function confirmReset() {
-  if (!confirm('Reset all data? Cannot be undone.')) return;
-  const fresh = DEFAULT_STATE();
-  await persistState(fresh);
-  renderWithState(fresh);
-  showToast('Data reset.');
+// ── Notion integration ──────────────────────────────────────────────────────
+function connectNotion() {
+  document.getElementById('notion-disconnected').style.display = 'none';
+  document.getElementById('notion-token-input').style.display = 'flex';
 }
 
-// ─── Confetti ─────────────────────────────────────────────────────────────────
-function triggerConfetti() {
-  const canvas = document.getElementById('confetti');
-  const ctx    = canvas.getContext('2d');
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-  const particles = Array.from({length:70},()=>({
-    x:Math.random()*canvas.width, y:-10,
-    r:Math.random()*5+3, d:Math.random()*2.5+1,
-    c:['#7c6ff7','#4ade80','#fbbf24','#f87171','#60a5fa'][Math.floor(Math.random()*5)],
-    s:Math.random()*2-1, a:Math.random()*360
-  }));
-  let frame=0;
-  function draw(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    particles.forEach(p=>{
-      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a*Math.PI/180);
-      ctx.fillStyle=p.c; ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.5); ctx.restore();
-      p.y+=p.d; p.x+=p.s; p.a+=2;
-    });
-    if(frame++<90) requestAnimationFrame(draw);
-    else ctx.clearRect(0,0,canvas.width,canvas.height);
+function cancelNotionConnect() {
+  document.getElementById('notion-disconnected').style.display = 'block';
+  document.getElementById('notion-token-input').style.display = 'none';
+}
+
+async function saveNotionToken() {
+  const token = document.getElementById('token-field').value.trim();
+  if (!token.startsWith('secret_')) { toast('Invalid token — must start with secret_'); return; }
+  notionToken = token;
+  localStorage.setItem('notionToken', token);
+  document.getElementById('notion-token-input').style.display = 'none';
+  await showNotionConnected();
+  if (currentUser) {
+    await db.collection('users').doc(currentUser.uid).set({ notionToken: token, notionConnected: true }, { merge: true });
   }
-  draw();
+}
+
+async function showNotionConnected() {
+  document.getElementById('notion-disconnected').style.display = 'none';
+  document.getElementById('notion-token-input').style.display = 'none';
+  document.getElementById('notion-connected').style.display = 'flex';
+  await loadNotionPages();
+}
+
+async function loadNotionPages() {
+  const sel = document.getElementById('page-select');
+  sel.innerHTML = '<option>Loading...</option>';
+  try {
+    const res = await fetch(`${NOTION_PROXY}/pages`, {
+      headers: { 'x-notion-token': notionToken }
+    });
+    const data = await res.json();
+    const pages = data.results
+      .filter(p => p.object === 'page')
+      .map(p => ({ id: p.id, title: getTitle(p) }));
+
+    sel.innerHTML = '<option value="">— Select a page —</option>' +
+      pages.map(p => `<option value="${p.id}" ${p.id===selectedPageId?'selected':''}>${p.title}</option>`).join('');
+
+    if (selectedPageId) loadTimetablePreview(selectedPageId);
+  } catch(e) {
+    sel.innerHTML = '<option>Error loading pages</option>';
+    toast('Could not reach Notion proxy');
+  }
+}
+
+async function onPageSelect(pageId) {
+  if (!pageId) return;
+  selectedPageId = pageId;
+  localStorage.setItem('notionPageId', pageId);
+  if (currentUser) {
+    await db.collection('users').doc(currentUser.uid).set({ selectedPageId: pageId }, { merge: true });
+  }
+  loadTimetablePreview(pageId);
+}
+
+async function loadTimetablePreview(pageId) {
+  const preview = document.getElementById('timetable-preview');
+  preview.style.display = 'block';
+  preview.innerHTML = '<div class="tp-row"><span style="color:var(--muted);font-size:0.8rem">Loading...</span></div>';
+  try {
+    const res = await fetch(`${NOTION_PROXY}/blocks/${pageId}/children`, {
+      headers: { 'x-notion-token': notionToken }
+    });
+    const data = await res.json();
+    const tables = data.results.filter(b => b.type === 'table');
+    if (!tables.length) { preview.innerHTML = '<div class="tp-row"><span style="color:var(--muted)">No timetable found on this page</span></div>'; return; }
+
+    for (const table of tables) {
+      const rows = await fetchChildren(table.id);
+      const parsed = parseTimetable(rows);
+      if (parsed.length > 0) {
+        preview.innerHTML = parsed.map(e =>
+          `<div class="tp-row"><span class="tp-time">${e.start}</span><span class="tp-block">${e.block}</span></div>`
+        ).join('');
+        // Also update schedule panel
+        document.getElementById('schedule-content').innerHTML = parsed.map(e =>
+          `<div class="tp-row" style="border-bottom:1px solid var(--border)">
+            <span class="tp-time">${e.start}</span>
+            <div><div class="tp-block">${e.block}</div><div style="font-size:0.7rem;color:var(--muted)">${e.task}</div></div>
+          </div>`
+        ).join('');
+        return;
+      }
+    }
+    preview.innerHTML = '<div class="tp-row"><span style="color:var(--muted)">No Start/End columns found — check table format</span></div>';
+  } catch(e) {
+    preview.innerHTML = '<div class="tp-row"><span style="color:var(--slip)">Error loading timetable</span></div>';
+  }
+}
+
+async function fetchChildren(blockId) {
+  const res = await fetch(`${NOTION_PROXY}/blocks/${blockId}/children`, {
+    headers: { 'x-notion-token': notionToken }
+  });
+  const d = await res.json();
+  return d.results || [];
+}
+
+function parseTimetable(rows) {
+  if (rows.length < 2) return [];
+  const header = getCells(rows[0]).map(h => h.toLowerCase());
+  const si = header.indexOf('start'), ei = header.indexOf('end');
+  const bi = header.indexOf('block'), ti = header.indexOf('task');
+  if (si === -1 || ei === -1) return [];
+  return rows.slice(1).map(row => {
+    const c = getCells(row);
+    return { start: c[si]||'', end: c[ei]||'', block: c[bi]||'', task: c[ti]||'' };
+  }).filter(r => r.start);
+}
+
+function getCells(row) {
+  return (row.table_row?.cells || []).map(c => c.map(t => t.plain_text).join(''));
+}
+
+function getTitle(page) {
+  const props = page.properties || {};
+  for (const k of Object.keys(props)) {
+    const t = props[k]?.title?.[0]?.plain_text;
+    if (t) return t;
+  }
+  return page.id.slice(0,8);
+}
+
+function disconnectNotion() {
+  notionToken = null; selectedPageId = null;
+  localStorage.removeItem('notionToken'); localStorage.removeItem('notionPageId');
+  document.getElementById('notion-connected').style.display = 'none';
+  document.getElementById('notion-disconnected').style.display = 'block';
+  if (currentUser) db.collection('users').doc(currentUser.uid).update({ notionConnected: false, notionToken: null });
+}
+
+// ── FCM Push ────────────────────────────────────────────────────────────────
+async function enablePush() {
+  if (!messaging) { toast('Push not supported in this browser'); return; }
+  const statusEl = document.getElementById('push-status');
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Permission denied'); return; }
+    const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+    localStorage.setItem('fcmToken', token);
+    if (currentUser) {
+      await db.collection('users').doc(currentUser.uid).set({ fcmToken: token }, { merge: true });
+    }
+    statusEl.textContent = '✓ Push notifications enabled';
+    statusEl.style.color = 'var(--clean)';
+    toast('Push notifications enabled!');
+  } catch(e) {
+    statusEl.textContent = 'Failed: ' + e.message;
+    toast('Push setup failed');
+  }
+}
+
+async function saveNotifPref(type, val) {
+  if (currentUser) {
+    await db.collection('users').doc(currentUser.uid).set(
+      { [`notif_${type}`]: val }, { merge: true }
+    );
+  }
+}
+
+// ── Service Worker ───────────────────────────────────────────────────────────
+function registerSW() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(console.error);
+  }
+}
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+function todayKey() { return dateKey(new Date()); }
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function resetData() {
+  if (!confirm('Delete all streak data? This cannot be undone.')) return;
+  streakData = {};
+  localStorage.removeItem('streakData');
+  if (currentUser) {
+    // Delete all day docs
+    db.collection('streaks').doc(currentUser.uid).collection('days').get()
+      .then(snap => snap.forEach(d => d.ref.delete()));
+  }
+  updateUI();
+  toast('All data reset');
 }
 </script>
 </body>

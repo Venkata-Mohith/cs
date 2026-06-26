@@ -3,288 +3,418 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="theme-color" content="#0a0a0a"/>
+  <meta name="theme-color" content="#0d0d0d"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <title>CleanStreak v4</title>
+  <title>CleanStreak v4.1</title>
   <link rel="manifest" href="/manifest.json"/>
   <style>
-    /* ── Reset & tokens ─────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --border: #222;
-      --accent: #e8ff47;      /* electric lime — streak energy */
-      --accent2: #ff6b35;     /* orange — warnings */
-      --text: #f0f0f0;
-      --muted: #666;
-      --clean: #4ade80;
-      --slip: #f87171;
-      --radius: 12px;
-      --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0d0d0d;
+      --surface:#181818;
+      --surface2:#1f1f1f;
+      --border:#2a2a2a;
+      --accent:#d4ff4f;
+      --accent-dim:rgba(212,255,79,0.12);
+      --text:#f2f2f2;
+      --muted:#5a5a5a;
+      --muted2:#888;
+      --clean:#3ddc84;
+      --clean-dim:rgba(61,220,132,0.12);
+      --slip:#ff6b6b;
+      --slip-dim:rgba(255,107,107,0.1);
+      --r:14px;
     }
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overscroll-behavior: none;
+    html{scroll-behavior:smooth}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;overscroll-behavior:none;
+      -webkit-tap-highlight-color:transparent;
+      -webkit-font-smoothing:antialiased;
+    }
+    button,input,select{-webkit-tap-highlight-color:transparent;outline:none}
+
+    /* ── Auth ── */
+    #auth-screen{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      min-height:100vh;padding:2.5rem;text-align:center;gap:1.8rem;
+    }
+    .auth-logo{font-size:2.4rem;font-weight:900;letter-spacing:-1.5px;line-height:1}
+    .auth-logo span{color:var(--accent)}
+    .auth-tag{color:var(--muted2);font-size:0.9rem;line-height:1.5}
+    .auth-science{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r);padding:1rem 1.2rem;
+      font-size:0.78rem;color:var(--muted2);line-height:1.6;
+      max-width:300px;text-align:left;
+    }
+    .auth-science strong{color:var(--accent);font-size:0.85rem}
+    .btn{
+      width:100%;max-width:320px;padding:0.9rem 1.5rem;
+      border:none;border-radius:var(--r);font-size:0.95rem;
+      font-weight:700;cursor:pointer;
+      transition:transform 0.1s,opacity 0.15s;
+      will-change:transform;
+    }
+    .btn:active{transform:scale(0.97);opacity:0.85}
+    .btn-primary{background:var(--accent);color:#000}
+    .btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}
+
+    /* ── App shell ── */
+    #app{display:none;max-width:430px;margin:0 auto;padding-bottom:72px}
+
+    /* ── Header ── */
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:1rem 1.2rem 0.7rem;
+      position:sticky;top:0;background:var(--bg);z-index:10;
+      border-bottom:1px solid var(--border);
+    }
+    .h-logo{font-size:1.05rem;font-weight:900;letter-spacing:-0.5px}
+    .h-logo span{color:var(--accent)}
+    .h-ver{font-size:0.6rem;color:var(--muted);font-weight:400;margin-left:4px}
+    .avatar{
+      width:32px;height:32px;border-radius:50%;
+      background:var(--surface2);border:1px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      font-size:0.75rem;font-weight:700;cursor:pointer;overflow:hidden;
+      transition:transform 0.15s;
+    }
+    .avatar:active{transform:scale(0.9)}
+    .avatar img{width:100%;height:100%;object-fit:cover}
+
+    /* ── Panels ── */
+    .panel{display:none}
+    .panel.active{display:block}
+
+    /* ── Section ── */
+    section{padding:1rem 1.2rem;border-bottom:1px solid var(--border)}
+    .sec-title{
+      font-size:0.68rem;font-weight:700;color:var(--muted);
+      letter-spacing:1.8px;text-transform:uppercase;margin-bottom:0.9rem;
     }
 
-    /* ── Auth screen ────────────────────────────────────────── */
-    #auth-screen {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 100vh; padding: 2rem; text-align: center; gap: 2rem;
+    /* ── Streak card ── */
+    .streak-card{
+      background:var(--surface);border-radius:var(--r);
+      padding:1.6rem 1.2rem 1.2rem;text-align:center;
+      position:relative;overflow:hidden;
+      border:1px solid var(--border);
     }
-    .logo { font-size: 2rem; font-weight: 800; letter-spacing: -1px; }
-    .logo span { color: var(--accent); }
-    .tagline { color: var(--muted); font-size: 0.9rem; max-width: 260px; }
-    .btn {
-      width: 100%; max-width: 300px; padding: 0.85rem 1.5rem;
-      border: none; border-radius: var(--radius); font-size: 1rem;
-      font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    .streak-card::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse at 50% -20%,rgba(212,255,79,0.07) 0%,transparent 65%);
+      pointer-events:none;
     }
-    .btn:active { opacity: 0.8; }
-    .btn-primary { background: var(--accent); color: #000; }
-    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .streak-num{
+      font-size:5.5rem;font-weight:900;line-height:1;
+      color:var(--accent);letter-spacing:-5px;
+      font-variant-numeric:tabular-nums;
+    }
+    .streak-lbl{color:var(--muted);font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;margin-top:0.2rem}
+    .streak-msg{margin-top:0.9rem;font-size:0.85rem;color:var(--muted2);line-height:1.4}
 
-    /* ── App shell ──────────────────────────────────────────── */
-    #app { display: none; max-width: 430px; margin: 0 auto; padding-bottom: 80px; }
-
-    /* ── Header ─────────────────────────────────────────────── */
-    header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1.2rem 1.2rem 0.8rem;
-      position: sticky; top: 0; background: var(--bg); z-index: 10;
-      border-bottom: 1px solid var(--border);
+    /* ── Progress ── */
+    .progress-wrap{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r);padding:1rem;margin-top:0.8rem;
     }
-    .header-logo { font-size: 1.1rem; font-weight: 800; }
-    .header-logo span { color: var(--accent); }
-    .avatar {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: var(--surface); border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; cursor: pointer; overflow: hidden;
+    .progress-top{display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:0.6rem}
+    .progress-top span:last-child{color:var(--muted)}
+    .pbar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+    .pfill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.6s cubic-bezier(.4,0,.2,1)}
+    .milestones{display:flex;justify-content:space-between;margin-top:0.7rem}
+    .ms{font-size:0.62rem;color:var(--muted);text-align:center;transition:color 0.3s}
+    .ms.hit{color:var(--accent)}
+    .ms-dot{
+      width:6px;height:6px;border-radius:50%;background:var(--border);
+      margin:0 auto 3px;transition:background 0.3s;
     }
-    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .ms.hit .ms-dot{background:var(--accent)}
 
-    /* ── Sections ───────────────────────────────────────────── */
-    section { padding: 1.2rem; border-bottom: 1px solid var(--border); }
-
-    /* ── Streak card ────────────────────────────────────────── */
-    .streak-card {
-      background: var(--surface); border-radius: var(--radius);
-      padding: 1.5rem; text-align: center; position: relative; overflow: hidden;
+    /* ── Check-in ── */
+    .checkin-row{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.9rem}
+    .btn-clean,.btn-slip{
+      border-radius:var(--r);padding:0.9rem;font-size:0.9rem;font-weight:700;
+      cursor:pointer;border:none;transition:transform 0.1s,opacity 0.15s;
+      will-change:transform;
     }
-    .streak-card::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 50% 0%, rgba(232,255,71,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .streak-number {
-      font-size: 5rem; font-weight: 900; line-height: 1;
-      color: var(--accent); letter-spacing: -4px;
-    }
-    .streak-label { color: var(--muted); font-size: 0.8rem; margin-top: 0.3rem; letter-spacing: 2px; text-transform: uppercase; }
-    .streak-msg { margin-top: 0.8rem; font-size: 0.9rem; color: var(--text); }
+    .btn-clean:active,.btn-slip:active{transform:scale(0.96)}
+    .btn-clean{background:var(--clean-dim);color:var(--clean);border:1px solid rgba(61,220,132,0.2)}
+    .btn-slip{background:var(--slip-dim);color:var(--slip);border:1px solid rgba(255,107,107,0.15)}
 
-    /* ── Check-in ───────────────────────────────────────────── */
-    .checkin-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 1rem; }
-    .btn-clean { background: rgba(74,222,128,0.15); color: var(--clean); border: 1px solid rgba(74,222,128,0.3); border-radius: var(--radius); padding: 0.9rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
-    .btn-slip  { background: rgba(248,113,113,0.1);  color: var(--slip);  border: 1px solid rgba(248,113,113,0.2);  border-radius: var(--radius); padding: 0.9rem; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
-    .btn-clean:active, .btn-slip:active { opacity: 0.7; }
-
-    /* ── Stats row ──────────────────────────────────────────── */
-    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.6rem; }
-    .stat { background: var(--surface); border-radius: 10px; padding: 0.8rem; text-align: center; }
-    .stat-val { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
-    .stat-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
-
-    /* ── Calendar ───────────────────────────────────────────── */
-    .section-title { font-size: 0.75rem; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 1rem; }
-    .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
-    .cal-day {
-      aspect-ratio: 1; border-radius: 6px; background: var(--surface);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.65rem; color: var(--muted); cursor: pointer;
-      border: 1px solid transparent; transition: border-color 0.15s;
+    /* ── Stats ── */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem}
+    .stat{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r);padding:0.9rem 0.5rem;text-align:center;
     }
-    .cal-day.clean  { background: rgba(74,222,128,0.2);  color: var(--clean); }
-    .cal-day.slip   { background: rgba(248,113,113,0.15); color: var(--slip); }
-    .cal-day.today  { border-color: var(--accent); color: var(--text); }
-    .cal-day.future { opacity: 0.2; cursor: default; }
+    .stat-val{font-size:1.6rem;font-weight:900;color:var(--accent)}
+    .stat-lbl{font-size:0.65rem;color:var(--muted);margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.5px}
 
-    /* ── Notion section ─────────────────────────────────────── */
-    .notion-connect {
-      background: var(--surface); border-radius: var(--radius);
-      padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;
+    /* ── Calendar ── */
+    .cal-header{
+      display:grid;grid-template-columns:repeat(7,1fr);
+      gap:2px;margin-bottom:4px;
     }
-    .notion-title { font-weight: 700; font-size: 0.95rem; }
-    .notion-sub { font-size: 0.8rem; color: var(--muted); }
-    .btn-notion {
-      background: #fff; color: #000; border: none; border-radius: 8px;
-      padding: 0.7rem 1rem; font-weight: 700; font-size: 0.85rem;
-      cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
-      width: fit-content;
+    .cal-dh{font-size:0.6rem;color:var(--muted);text-align:center;padding:3px 0}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+    .cal-day{
+      aspect-ratio:1;border-radius:8px;background:var(--surface);
+      display:flex;align-items:center;justify-content:center;
+      font-size:0.62rem;color:var(--muted);cursor:pointer;
+      border:1px solid transparent;
+      transition:transform 0.1s,background 0.2s;
+      position:relative;will-change:transform;
+    }
+    .cal-day:active{transform:scale(0.88)}
+    .cal-day.clean{background:var(--clean-dim);color:var(--clean);border-color:rgba(61,220,132,0.15)}
+    .cal-day.slip{background:var(--slip-dim);color:var(--slip);border-color:rgba(255,107,107,0.1)}
+    .cal-day.today{border-color:var(--accent);color:var(--text)}
+    .cal-day.future{opacity:0.2;cursor:default;pointer-events:none}
+    .cal-day.milestone::after{
+      content:'★';position:absolute;top:-1px;right:-1px;
+      font-size:0.45rem;color:var(--accent);line-height:1;
     }
 
-    /* Notion page selector */
-    #notion-connected { display: none; flex-direction: column; gap: 0.8rem; }
-    .page-select-label { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
-    select {
-      width: 100%; background: var(--bg); color: var(--text);
-      border: 1px solid var(--border); border-radius: 8px;
-      padding: 0.7rem 0.9rem; font-size: 0.9rem; appearance: none;
-      cursor: pointer;
+    /* Milestone legend */
+    .cal-legend{
+      display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.8rem;
     }
-    .timetable-preview {
-      background: var(--bg); border-radius: 8px; border: 1px solid var(--border);
-      overflow: hidden;
-    }
-    .tp-row {
-      display: grid; grid-template-columns: 90px 1fr;
-      padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border);
-      font-size: 0.8rem;
-    }
-    .tp-row:last-child { border-bottom: none; }
-    .tp-time { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
-    .tp-block { color: var(--text); }
+    .legend-item{display:flex;align-items:center;gap:0.3rem;font-size:0.68rem;color:var(--muted2)}
+    .legend-dot{width:8px;height:8px;border-radius:50%}
 
-    /* ── Notifications section ──────────────────────────────── */
-    .notif-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+    /* ── Day modal ── */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,0.7);
+      z-index:50;display:none;align-items:flex-end;justify-content:center;
+      backdrop-filter:blur(4px);
     }
-    .notif-row:last-child { border-bottom: none; }
-    .notif-info { flex: 1; }
-    .notif-name { font-size: 0.9rem; font-weight: 600; }
-    .notif-desc { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+    .modal-overlay.open{display:flex}
+    .modal{
+      background:var(--surface);border-radius:20px 20px 0 0;
+      padding:1.5rem;width:100%;max-width:430px;
+      border-top:1px solid var(--border);
+      transform:translateY(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1);
+    }
+    .modal-overlay.open .modal{transform:translateY(0)}
+    .modal-date{font-size:0.8rem;color:var(--muted);margin-bottom:1rem;text-align:center}
+    .modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:0.7rem}
+    .modal-clear{
+      width:100%;background:transparent;color:var(--muted);
+      border:1px solid var(--border);border-radius:var(--r);
+      padding:0.7rem;font-size:0.85rem;cursor:pointer;
+      transition:opacity 0.15s;
+    }
+    .modal-clear:active{opacity:0.6}
 
-    /* Toggle switch */
-    .toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
-    .toggle input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; inset: 0; background: var(--border);
-      border-radius: 13px; cursor: pointer; transition: background 0.2s;
+    /* ── Schedule panel ── */
+    .sched-empty{color:var(--muted2);font-size:0.85rem;line-height:1.6}
+    .sched-row{
+      display:grid;grid-template-columns:90px 1fr;
+      padding:0.65rem 0;border-bottom:1px solid var(--border);
+      align-items:start;gap:0.5rem;
     }
-    .slider::before {
-      content: ''; position: absolute; width: 20px; height: 20px;
-      left: 3px; top: 3px; background: #fff; border-radius: 50%;
-      transition: transform 0.2s;
+    .sched-row:last-child{border-bottom:none}
+    .sched-time{color:var(--accent);font-size:0.78rem;font-weight:700;font-variant-numeric:tabular-nums;padding-top:1px}
+    .sched-block{font-size:0.85rem;font-weight:600}
+    .sched-task{font-size:0.72rem;color:var(--muted2);margin-top:2px;line-height:1.4}
+    .now-indicator{
+      background:var(--accent-dim);border-left:2px solid var(--accent);
+      border-radius:0 6px 6px 0;padding-left:0.5rem;
     }
-    .toggle input:checked + .slider { background: var(--accent); }
-    .toggle input:checked + .slider::before { transform: translateX(18px); }
 
-    /* ── Bottom nav ─────────────────────────────────────────── */
-    nav {
-      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-      width: 100%; max-width: 430px;
-      background: var(--surface); border-top: 1px solid var(--border);
-      display: grid; grid-template-columns: repeat(4,1fr);
-      padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+    /* ── Settings ── */
+    .notion-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r);padding:1.2rem;
     }
-    .nav-item {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 0.2rem; cursor: pointer; padding: 0.4rem;
-      color: var(--muted); font-size: 0.65rem; font-weight: 600;
-      border: none; background: none;
+    .notion-card-title{font-weight:700;font-size:0.9rem;margin-bottom:0.3rem}
+    .notion-card-sub{font-size:0.78rem;color:var(--muted2);line-height:1.5}
+    .btn-notion{
+      display:inline-flex;align-items:center;gap:0.5rem;
+      background:#fff;color:#000;border:none;border-radius:8px;
+      padding:0.6rem 1rem;font-weight:700;font-size:0.82rem;
+      cursor:pointer;margin-top:0.8rem;
+      transition:transform 0.1s;
     }
-    .nav-item.active { color: var(--accent); }
-    .nav-icon { font-size: 1.3rem; }
-
-    /* ── Tabs / panels ──────────────────────────────────────── */
-    .panel { display: none; }
-    .panel.active { display: block; }
-
-    /* ── Toast ──────────────────────────────────────────────── */
-    #toast {
-      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
-      background: var(--surface); border: 1px solid var(--border);
-      color: var(--text); padding: 0.7rem 1.2rem; border-radius: 20px;
-      font-size: 0.85rem; opacity: 0; transition: all 0.3s; pointer-events: none;
-      white-space: nowrap; z-index: 100;
+    .btn-notion:active{transform:scale(0.96)}
+    .notion-hint{font-size:0.7rem;color:var(--muted);margin-top:0.6rem;line-height:1.5}
+    .notion-hint a{color:var(--accent);text-decoration:none}
+    #notion-token-input{display:none;flex-direction:column;gap:0.6rem;margin-top:0.8rem}
+    input[type=password],select{
+      width:100%;background:var(--bg);color:var(--text);
+      border:1px solid var(--border);border-radius:10px;
+      padding:0.7rem 0.9rem;font-size:0.875rem;
+      transition:border-color 0.2s;
     }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* ── Profile panel ──────────────────────────────────────── */
-    .profile-card {
-      background: var(--surface); border-radius: var(--radius);
-      padding: 1.5rem; text-align: center; margin-bottom: 1rem;
+    input[type=password]:focus,select:focus{border-color:var(--accent)}
+    #notion-connected{display:none;flex-direction:column;gap:0.8rem;margin-top:0.8rem}
+    .connected-badge{
+      display:flex;align-items:center;justify-content:space-between;
+      font-size:0.78rem;
     }
-    .profile-avatar {
-      width: 70px; height: 70px; border-radius: 50%;
-      background: var(--border); margin: 0 auto 0.8rem;
-      overflow: hidden; display: flex; align-items: center; justify-content: center;
-      font-size: 1.8rem;
+    .connected-badge span{color:var(--clean);font-weight:600}
+    .disconnect-btn{
+      background:none;border:none;color:var(--muted);font-size:0.72rem;
+      cursor:pointer;text-decoration:underline;
     }
-    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .profile-name { font-weight: 800; font-size: 1.1rem; }
-    .profile-email { color: var(--muted); font-size: 0.8rem; margin-top: 0.2rem; }
-    .danger-zone { margin-top: 1rem; }
-    .btn-danger { background: rgba(248,113,113,0.1); color: var(--slip); border: 1px solid rgba(248,113,113,0.2); border-radius: var(--radius); padding: 0.8rem; width: 100%; font-weight: 700; cursor: pointer; margin-top: 0.5rem; }
+    .page-sel-lbl{font-size:0.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px}
+    .tt-preview{
+      background:var(--bg);border:1px solid var(--border);
+      border-radius:10px;overflow:hidden;
+    }
+    .tt-row{
+      display:grid;grid-template-columns:85px 1fr;
+      padding:0.5rem 0.8rem;border-bottom:1px solid var(--border);
+      font-size:0.78rem;
+    }
+    .tt-row:last-child{border-bottom:none}
+    .tt-t{color:var(--accent);font-weight:600}
 
-    /* ── Progress bar ───────────────────────────────────────── */
-    .progress-wrap { background: var(--surface); border-radius: var(--radius); padding: 1rem; margin-bottom: 0.8rem; }
-    .progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 0.6rem; }
-    .progress-label span:last-child { color: var(--muted); }
-    .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
-    .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.5s; }
+    /* Notif toggles */
+    .notif-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0.7rem 0;border-bottom:1px solid var(--border);
+    }
+    .notif-row:last-of-type{border-bottom:none}
+    .notif-name{font-size:0.88rem;font-weight:600}
+    .notif-desc{font-size:0.72rem;color:var(--muted2);margin-top:0.15rem}
+    .toggle{position:relative;width:44px;height:26px;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0}
+    .slider{
+      position:absolute;inset:0;background:var(--border);
+      border-radius:13px;cursor:pointer;transition:background 0.25s;
+    }
+    .slider::before{
+      content:'';position:absolute;width:20px;height:20px;
+      left:3px;top:3px;background:#fff;border-radius:50%;
+      transition:transform 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    .toggle input:checked+.slider{background:var(--accent)}
+    .toggle input:checked+.slider::before{transform:translateX(18px)}
 
-    /* milestones */
-    .milestones { display: flex; justify-content: space-between; margin-top: 0.6rem; }
-    .milestone { font-size: 0.65rem; color: var(--muted); text-align: center; }
-    .milestone.reached { color: var(--accent); }
+    /* ── Profile ── */
+    .profile-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r);padding:1.5rem;text-align:center;margin-bottom:1rem;
+    }
+    .profile-av{
+      width:68px;height:68px;border-radius:50%;
+      background:var(--surface2);margin:0 auto 0.8rem;
+      overflow:hidden;display:flex;align-items:center;justify-content:center;
+      font-size:1.6rem;border:2px solid var(--border);
+    }
+    .profile-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+    .profile-name{font-weight:800;font-size:1.05rem}
+    .profile-email{color:var(--muted2);font-size:0.78rem;margin-top:0.2rem}
+    .btn-danger{
+      background:var(--slip-dim);color:var(--slip);
+      border:1px solid rgba(255,107,107,0.15);border-radius:var(--r);
+      padding:0.8rem;width:100%;font-weight:700;font-size:0.88rem;
+      cursor:pointer;margin-top:0.6rem;
+      transition:transform 0.1s;
+    }
+    .btn-danger:active{transform:scale(0.97)}
+
+    /* Science card */
+    .science-card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--r);padding:1rem;margin-bottom:0.8rem;
+    }
+    .science-card h4{font-size:0.78rem;font-weight:700;color:var(--accent);margin-bottom:0.5rem}
+    .science-row{display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.78rem;border-bottom:1px solid var(--border)}
+    .science-row:last-child{border-bottom:none}
+    .science-row span:last-child{color:var(--muted2)}
+
+    /* ── Nav ── */
+    nav{
+      position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+      width:100%;max-width:430px;
+      background:var(--surface);border-top:1px solid var(--border);
+      display:grid;grid-template-columns:repeat(4,1fr);
+      padding:0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
+      z-index:20;
+    }
+    .nav-btn{
+      display:flex;flex-direction:column;align-items:center;gap:0.2rem;
+      cursor:pointer;padding:0.4rem;color:var(--muted);
+      font-size:0.62rem;font-weight:600;letter-spacing:0.3px;
+      background:none;border:none;
+      transition:color 0.2s,transform 0.1s;
+    }
+    .nav-btn:active{transform:scale(0.9)}
+    .nav-btn.active{color:var(--accent)}
+    .nav-icon{font-size:1.25rem;line-height:1}
+
+    /* ── Toast ── */
+    #toast{
+      position:fixed;bottom:84px;left:50%;
+      transform:translateX(-50%) translateY(10px);
+      background:var(--surface2);border:1px solid var(--border);
+      color:var(--text);padding:0.6rem 1.2rem;border-radius:20px;
+      font-size:0.82rem;opacity:0;transition:all 0.25s;
+      pointer-events:none;white-space:nowrap;z-index:100;
+    }
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* panel slide animation */
+    .panel{animation:none}
+    .panel.active{animation:fadeIn 0.2s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
 
-<!-- ── Auth Screen ────────────────────────────────────────────── -->
+<!-- Auth -->
 <div id="auth-screen">
   <div>
-    <div class="logo">clean<span>streak</span></div>
-    <p class="tagline">Your streak follows you everywhere.</p>
+    <div class="auth-logo">clean<span>streak</span></div>
+    <p class="auth-tag" style="margin-top:0.5rem">Your streak follows you everywhere.</p>
+  </div>
+  <div class="auth-science">
+    <strong>Science says:</strong> Habits form in <strong style="color:var(--accent)">59–66 days</strong> on average (UCL, 2024), not 21. Some take up to 335 days. CleanStreak tracks your full 180-day journey.
   </div>
   <button class="btn btn-primary" onclick="signIn()">Continue with Google</button>
   <button class="btn btn-ghost" onclick="useAnonymous()">Use without signing in</button>
 </div>
 
-<!-- ── App ───────────────────────────────────────────────────── -->
+<!-- App -->
 <div id="app">
   <header>
-    <div class="header-logo">clean<span>streak</span> <small style="color:var(--muted);font-size:0.65rem;font-weight:400">v4</small></div>
+    <div class="h-logo">clean<span>streak</span><span class="h-ver">v4.1</span></div>
     <div class="avatar" id="avatar-btn" onclick="showPanel('profile')">
       <span id="avatar-letter">M</span>
     </div>
   </header>
 
-  <!-- ── Home panel ── -->
+  <!-- Home -->
   <div class="panel active" id="panel-home">
     <section>
       <div class="streak-card">
-        <div class="streak-number" id="streak-count">0</div>
-        <div class="streak-label">day streak</div>
+        <div class="streak-num" id="streak-count">0</div>
+        <div class="streak-lbl">day streak</div>
         <div class="streak-msg" id="streak-msg">Check in tonight to start your streak</div>
       </div>
-
-      <div class="progress-wrap" style="margin-top:1rem">
-        <div class="progress-label">
-          <span>90-day goal</span>
-          <span id="progress-text">0 / 90</span>
+      <div class="progress-wrap">
+        <div class="progress-top">
+          <span id="goal-label">66-day goal</span>
+          <span id="progress-text">0 / 66</span>
         </div>
-        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div>
         <div class="milestones">
-          <div class="milestone" data-day="7">7d</div>
-          <div class="milestone" data-day="21">21d</div>
-          <div class="milestone" data-day="66">66d</div>
-          <div class="milestone" data-day="90">90d</div>
+          <div class="ms" data-day="21"><div class="ms-dot"></div>21d</div>
+          <div class="ms" data-day="60"><div class="ms-dot"></div>60d</div>
+          <div class="ms" data-day="66"><div class="ms-dot"></div>66d</div>
+          <div class="ms" data-day="90"><div class="ms-dot"></div>90d</div>
+          <div class="ms" data-day="180"><div class="ms-dot"></div>180d</div>
         </div>
       </div>
-
       <div class="checkin-row" id="checkin-row">
         <button class="btn-clean" onclick="checkIn('clean')">✓ Stayed clean</button>
-        <button class="btn-slip"  onclick="checkIn('slip')">↺ I slipped</button>
+        <button class="btn-slip" onclick="checkIn('slip')">↺ I slipped</button>
       </div>
     </section>
 
@@ -297,132 +427,150 @@
     </section>
 
     <section>
-      <div class="section-title">90-day calendar</div>
+      <div class="sec-title">180-day calendar — tap any day to edit</div>
+      <div class="cal-header">
+        <div class="cal-dh">S</div><div class="cal-dh">M</div><div class="cal-dh">T</div>
+        <div class="cal-dh">W</div><div class="cal-dh">T</div><div class="cal-dh">F</div><div class="cal-dh">S</div>
+      </div>
       <div class="cal-grid" id="cal-grid"></div>
+      <div class="cal-legend" style="margin-top:0.8rem">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--clean)"></div>Clean</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--slip)"></div>Slipped</div>
+        <div class="legend-item"><span style="font-size:0.7rem;color:var(--accent)">★</span>&nbsp;Milestone</div>
+      </div>
     </section>
-  </div>
 
-  <!-- ── Schedule panel ── -->
-  <div class="panel" id="panel-schedule">
     <section>
-      <div class="section-title">Today's Schedule</div>
-      <div id="schedule-content">
-        <p style="color:var(--muted);font-size:0.85rem">Connect Notion in Settings to see your schedule here.</p>
+      <div class="sec-title">Habit science</div>
+      <div class="science-card">
+        <h4>How long does it actually take?</h4>
+        <div class="science-row"><span>First automaticity</span><span>~21 days (myth origin)</span></div>
+        <div class="science-row"><span>Median formation</span><span>59–66 days (UCL 2024)</span></div>
+        <div class="science-row"><span>Stable habit</span><span>90 days</span></div>
+        <div class="science-row"><span>Deep rewiring</span><span>Up to 335 days</span></div>
+        <div class="science-row"><span>This app tracks</span><span>180 days</span></div>
       </div>
     </section>
   </div>
 
-  <!-- ── Settings panel ── -->
+  <!-- Schedule -->
+  <div class="panel" id="panel-schedule">
+    <section>
+      <div class="sec-title">Today's Schedule</div>
+      <div id="schedule-content">
+        <p class="sched-empty">Connect Notion in Settings to see your schedule here.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Settings -->
   <div class="panel" id="panel-settings">
     <section>
-      <div class="section-title">Notion</div>
-      <div class="notion-connect">
-        <div>
-          <div class="notion-title">Connect your Notion</div>
-          <div class="notion-sub">Select any page with a timetable — the app auto-detects it and schedules notifications.</div>
-        </div>
+      <div class="sec-title">Notion</div>
+      <div class="notion-card">
+        <div class="notion-card-title">Connect your Notion</div>
+        <div class="notion-card-sub">Select any page with a timetable — app auto-detects and schedules notifications.</div>
 
-        <!-- Not connected state -->
         <div id="notion-disconnected">
           <button class="btn-notion" onclick="connectNotion()">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect width="16" height="16" rx="3" fill="#000"/><path d="M4 4h5.5l2.5 3v5H4V4z" fill="#fff"/></svg>
+            <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="2.5" fill="#000"/><path d="M3 3h5l2.5 2.5V11H3V3z" fill="#fff"/></svg>
             Connect Notion
           </button>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:0.5rem">You'll need a Notion integration token. <a href="https://www.notion.so/my-integrations" target="_blank" style="color:var(--accent)">Get one here →</a></div>
+          <p class="notion-hint">Need an integration token. <a href="https://www.notion.so/my-integrations" target="_blank">Get one here →</a></p>
         </div>
 
-        <!-- Token input (shown after clicking Connect) -->
-        <div id="notion-token-input" style="display:none;flex-direction:column;gap:0.6rem">
-          <input id="token-field" type="password" placeholder="secret_xxxxxx..." style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:0.7rem;font-size:0.85rem;width:100%"/>
-          <button class="btn btn-primary" onclick="saveNotionToken()" style="font-size:0.85rem;padding:0.7rem">Save Token</button>
-          <button class="btn btn-ghost" onclick="cancelNotionConnect()" style="font-size:0.8rem;padding:0.6rem">Cancel</button>
+        <div id="notion-token-input">
+          <input type="password" id="token-field" placeholder="ntn_xxxxxxx or secret_xxxxxxx"/>
+          <button class="btn btn-primary" onclick="saveNotionToken()" style="font-size:0.85rem;padding:0.75rem">Save Token</button>
+          <button class="btn btn-ghost" onclick="cancelNotion()" style="font-size:0.8rem;padding:0.65rem">Cancel</button>
         </div>
 
-        <!-- Connected state -->
         <div id="notion-connected">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <span style="font-size:0.8rem;color:var(--clean)">✓ Connected</span>
-            <button onclick="disconnectNotion()" style="background:none;border:none;color:var(--muted);font-size:0.75rem;cursor:pointer">Disconnect</button>
+          <div class="connected-badge">
+            <span>✓ Connected</span>
+            <button class="disconnect-btn" onclick="disconnectNotion()">Disconnect</button>
           </div>
-          <div class="page-select-label">Select page to track</div>
+          <div class="page-sel-lbl">Select page</div>
           <select id="page-select" onchange="onPageSelect(this.value)">
             <option value="">Loading pages...</option>
           </select>
-          <div id="timetable-preview" class="timetable-preview" style="display:none"></div>
+          <div id="tt-preview" class="tt-preview" style="display:none"></div>
         </div>
       </div>
     </section>
 
     <section>
-      <div class="section-title">Notifications</div>
+      <div class="sec-title">Notifications</div>
       <div class="notif-row">
-        <div class="notif-info">
+        <div>
           <div class="notif-name">Schedule reminders</div>
-          <div class="notif-desc">Notify at the start of each block from Notion</div>
+          <div class="notif-desc">Notify at start of each Notion block</div>
         </div>
         <label class="toggle">
-          <input type="checkbox" id="toggle-schedule" onchange="saveNotifPref('schedule', this.checked)"/>
+          <input type="checkbox" id="tog-schedule" onchange="savePref('schedule',this.checked)"/>
           <span class="slider"></span>
         </label>
       </div>
       <div class="notif-row">
-        <div class="notif-info">
+        <div>
           <div class="notif-name">Streak warning</div>
-          <div class="notif-desc">Remind at 9 PM if you haven't checked in</div>
+          <div class="notif-desc">9 PM reminder if not checked in</div>
         </div>
         <label class="toggle">
-          <input type="checkbox" id="toggle-streak" onchange="saveNotifPref('streak', this.checked)" checked/>
+          <input type="checkbox" id="tog-streak" onchange="savePref('streak',this.checked)" checked/>
           <span class="slider"></span>
         </label>
       </div>
-      <button class="btn btn-primary" style="margin-top:1rem;font-size:0.85rem;padding:0.75rem" onclick="enablePush()">Enable Push Notifications</button>
-      <div id="push-status" style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem"></div>
+      <button class="btn btn-primary" style="margin-top:1rem;font-size:0.85rem;padding:0.75rem" onclick="enablePush()">
+        Enable Push Notifications
+      </button>
+      <div id="push-status" style="font-size:0.72rem;color:var(--muted2);margin-top:0.5rem"></div>
     </section>
   </div>
 
-  <!-- ── Profile panel ── -->
+  <!-- Profile -->
   <div class="panel" id="panel-profile">
     <section>
       <div class="profile-card">
-        <div class="profile-avatar" id="profile-avatar">👤</div>
+        <div class="profile-av" id="profile-av">👤</div>
         <div class="profile-name" id="profile-name">—</div>
         <div class="profile-email" id="profile-email">—</div>
       </div>
-      <div class="danger-zone">
-        <div class="section-title">Danger zone</div>
-        <button class="btn-danger" onclick="resetData()">Reset all data</button>
-        <button class="btn-danger" style="margin-top:0.5rem" onclick="signOut()">Sign out</button>
-      </div>
+      <div class="sec-title">Danger zone</div>
+      <button class="btn-danger" onclick="resetData()">Reset all streak data</button>
+      <button class="btn-danger" onclick="signOut()">Sign out</button>
     </section>
   </div>
 
-  <!-- ── Bottom nav ── -->
   <nav>
-    <button class="nav-item active" id="nav-home" onclick="showPanel('home')">
-      <span class="nav-icon">🔥</span>Streak
-    </button>
-    <button class="nav-item" id="nav-schedule" onclick="showPanel('schedule')">
-      <span class="nav-icon">📅</span>Schedule
-    </button>
-    <button class="nav-item" id="nav-settings" onclick="showPanel('settings')">
-      <span class="nav-icon">⚙️</span>Settings
-    </button>
-    <button class="nav-item" id="nav-profile" onclick="showPanel('profile')">
-      <span class="nav-icon">👤</span>Profile
-    </button>
+    <button class="nav-btn active" id="nav-home" onclick="showPanel('home')"><span class="nav-icon">🔥</span>Streak</button>
+    <button class="nav-btn" id="nav-schedule" onclick="showPanel('schedule')"><span class="nav-icon">📅</span>Schedule</button>
+    <button class="nav-btn" id="nav-settings" onclick="showPanel('settings')"><span class="nav-icon">⚙️</span>Settings</button>
+    <button class="nav-btn" id="nav-profile" onclick="showPanel('profile')"><span class="nav-icon">👤</span>Profile</button>
   </nav>
+</div>
+
+<!-- Day modal -->
+<div class="modal-overlay" id="day-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-date" id="modal-date">Select status</div>
+    <div class="modal-btns">
+      <button class="btn-clean" onclick="modalCheckIn('clean')">✓ Stayed clean</button>
+      <button class="btn-slip" onclick="modalCheckIn('slip')">↺ I slipped</button>
+    </div>
+    <button class="modal-clear" onclick="modalCheckIn(null)">Clear this day</button>
+  </div>
 </div>
 
 <div id="toast"></div>
 
-<!-- ── Firebase ──────────────────────────────────────────────── -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
 <script>
-// ── CONFIG — replace with your actual values ────────────────────────────────
 const FB_CONFIG = {
   apiKey: "AIzaSyDOHydBHLiz5FIEzwlaWXLkEwHva_f51vI",
   authDomain: "cleanstreak-107b4.firebaseapp.com",
@@ -431,391 +579,328 @@ const FB_CONFIG = {
   messagingSenderId: "126724532219",
   appId: "1:126724532219:web:3a5f98af4f3778f82e8d5e"
 };
-const VAPID_KEY = "BLV1tIkOS2I-16tswyiGexIUoBR8Pi9RnCBUIs2Vq9gjWyxZv1G2LHMooVe8aed1cgi7qXm2UTbE5S8FnACkm6E"; // Firebase Console → Cloud Messaging → Web Push certificates
-const NOTION_PROXY = "https://cs-notion.mohithpupppala.workers.dev"; // After deploying cloudflare-worker.js
+const VAPID_KEY = "BLV1tIkOS2I-16tswyiGexIUoBR8Pi9RnCBUIs2Vq9gjWyxZv1G2LHMooVe8aed1cgi7qXm2UTbE5S8FnACkm6E";
+const NOTION_PROXY = "https://cs-notion.mohithpupppala.workers.dev";
+const MILESTONES = new Set([21,60,66,90,180]);
 
 firebase.initializeApp(FB_CONFIG);
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db   = firebase.firestore();
 let messaging;
-try { messaging = firebase.messaging(); } catch(e) {}
+try{ messaging = firebase.messaging(); }catch(e){}
 
-// ── State ───────────────────────────────────────────────────────────────────
 let currentUser = null;
-let streakData = {};   // { "2025-01-01": "clean" | "slip" }
+let streakData  = {};
 let notionToken = localStorage.getItem('notionToken') || null;
-let selectedPageId = localStorage.getItem('notionPageId') || null;
+let selPageId   = localStorage.getItem('notionPageId') || null;
+let modalKey    = null;
 
-// ── Auth ────────────────────────────────────────────────────────────────────
-auth.onAuthStateChanged(user => {
-  currentUser = user;
-  if (user) {
-    showApp(user);
-    loadStreak();
-    if (notionToken) showNotionConnected();
-  } else {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-  }
+// ── Auth ──
+auth.onAuthStateChanged(u => {
+  currentUser = u;
+  if(u){ showApp(u); loadStreak(); if(notionToken) showConnected(); }
+  else { document.getElementById('auth-screen').style.display='flex'; document.getElementById('app').style.display='none'; }
 });
 
-async function signIn() {
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithPopup(provider);
-  } catch(e) { toast('Sign in failed'); }
+async function signIn(){
+  try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+  catch(e){ toast('Sign in failed'); }
 }
+function useAnonymous(){ showApp(null); loadStreakLocal(); }
 
-function useAnonymous() {
-  // Show app without auth — local only
-  showApp(null);
-  loadStreakLocal();
-}
-
-function showApp(user) {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  if (user) {
-    document.getElementById('avatar-letter').textContent = (user.displayName || 'M')[0].toUpperCase();
-    document.getElementById('profile-name').textContent = user.displayName || 'Anonymous';
-    document.getElementById('profile-email').textContent = user.email || '';
-    if (user.photoURL) {
-      document.getElementById('avatar-btn').innerHTML = `<img src="${user.photoURL}"/>`;
-      document.getElementById('profile-avatar').innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
+function showApp(u){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  if(u){
+    document.getElementById('avatar-letter').textContent = (u.displayName||'M')[0].toUpperCase();
+    document.getElementById('profile-name').textContent  = u.displayName||'Anonymous';
+    document.getElementById('profile-email').textContent = u.email||'';
+    if(u.photoURL){
+      document.getElementById('avatar-btn').innerHTML=`<img src="${u.photoURL}"/>`;
+      document.getElementById('profile-av').innerHTML=`<img src="${u.photoURL}"/>`;
     }
   }
-  renderCalendar();
   registerSW();
 }
+async function signOut(){ await auth.signOut(); localStorage.clear(); }
 
-async function signOut() {
-  await auth.signOut();
-  localStorage.clear();
+// ── Streak ──
+async function loadStreak(){
+  if(!currentUser) return loadStreakLocal();
+  const snap = await db.collection('streaks').doc(currentUser.uid).collection('days').get();
+  streakData={};
+  snap.forEach(d=>{ streakData[d.id]=d.data().status; });
+  updateUI();
 }
-
-// ── Streak data ─────────────────────────────────────────────────────────────
-async function loadStreak() {
-  if (!currentUser) return loadStreakLocal();
-  const snap = await db.collection('streaks').doc(currentUser.uid)
-    .collection('days').get();
-  streakData = {};
-  snap.forEach(d => { streakData[d.id] = d.data().status; });
+function loadStreakLocal(){
+  streakData=JSON.parse(localStorage.getItem('streakData')||'{}');
   updateUI();
 }
 
-function loadStreakLocal() {
-  streakData = JSON.parse(localStorage.getItem('streakData') || '{}');
+async function checkIn(status){
+  const k=todayKey();
+  streakData[k]=status;
+  persist(k,status);
   updateUI();
+  toast(status==='clean'?'✓ Clean day logged':'Logged. Never miss twice.');
 }
 
-async function checkIn(status) {
-  const today = todayKey();
-  streakData[today] = status;
-  if (currentUser) {
-    await db.collection('streaks').doc(currentUser.uid)
-      .collection('days').doc(today).set({ status, ts: Date.now() });
-    // Update user doc for Cloud Function
+async function persist(k,status){
+  if(currentUser){
+    const ref = db.collection('streaks').doc(currentUser.uid).collection('days').doc(k);
+    status===null ? await ref.delete() : await ref.set({status,ts:Date.now()});
     await db.collection('users').doc(currentUser.uid).set({
-      fcmToken: localStorage.getItem('fcmToken') || null,
-      notionToken: notionToken,
-      notionConnected: !!notionToken,
-      selectedPageId: selectedPageId
-    }, { merge: true });
+      fcmToken:localStorage.getItem('fcmToken')||null,
+      notionToken,notionConnected:!!notionToken,selectedPageId:selPageId
+    },{merge:true});
   } else {
-    localStorage.setItem('streakData', JSON.stringify(streakData));
+    if(status===null) delete streakData[k];
+    localStorage.setItem('streakData',JSON.stringify(streakData));
   }
-  updateUI();
-  toast(status === 'clean' ? '✓ Clean day logged' : 'Logged. Never miss twice.');
 }
 
-// ── UI update ───────────────────────────────────────────────────────────────
-function updateUI() {
-  const streak = calcStreak();
-  const cleanDays = Object.values(streakData).filter(v => v === 'clean').length;
-  const total = Object.keys(streakData).length;
-  const rate = total > 0 ? Math.round(cleanDays / total * 100) : 0;
-  const best = calcBest();
+// ── UI ──
+function updateUI(){
+  const streak  = calcStreak();
+  const clean   = Object.values(streakData).filter(v=>v==='clean').length;
+  const total   = Object.keys(streakData).length;
+  const rate    = total>0?Math.round(clean/total*100):0;
+  const best    = calcBest();
+  const goal    = clean>=90?180:clean>=66?90:66;
 
   document.getElementById('streak-count').textContent = streak;
-  document.getElementById('stat-best').textContent = best;
-  document.getElementById('stat-clean').textContent = cleanDays;
-  document.getElementById('stat-rate').textContent = rate + '%';
-  document.getElementById('progress-text').textContent = `${cleanDays} / 90`;
-  document.getElementById('progress-fill').style.width = Math.min(cleanDays/90*100, 100) + '%';
+  document.getElementById('stat-best').textContent    = best;
+  document.getElementById('stat-clean').textContent   = clean;
+  document.getElementById('stat-rate').textContent    = rate+'%';
+  document.getElementById('goal-label').textContent   = goal+'-day goal';
+  document.getElementById('progress-text').textContent= clean+' / '+goal;
+  document.getElementById('pfill').style.width        = Math.min(clean/goal*100,100)+'%';
 
-  // Milestone highlight
-  document.querySelectorAll('.milestone').forEach(m => {
-    m.classList.toggle('reached', cleanDays >= parseInt(m.dataset.day));
+  document.querySelectorAll('.ms').forEach(m=>{
+    m.classList.toggle('hit', clean>=parseInt(m.dataset.day));
   });
 
-  // Streak message
-  const msgs = [
-    'Check in tonight to start your streak',
-    '⚡ Never miss twice — Atomic Habits',
-    '🔥 Keep going!',
-    '💪 One week strong!',
-    '🌟 21 days — habit forming!',
-    '🧠 66 days — automaticity!'
-  ];
-  const today = streakData[todayKey()];
-  const msgEl = document.getElementById('streak-msg');
-  if (today) {
-    msgEl.textContent = today === 'clean' ? '✓ Checked in today' : 'You slipped. Come back tomorrow.';
-  } else {
-    msgEl.textContent = streak === 0 ? msgs[0] : msgs[1];
-  }
+  const today=streakData[todayKey()];
+  const msg=document.getElementById('streak-msg');
+  if(today) msg.textContent=today==='clean'?'✓ Checked in today. Keep going.':'You slipped. Never miss twice.';
+  else msg.textContent=streak>0?'⚡ Keep the streak alive — check in tonight':'Check in tonight to start your streak';
 
   renderCalendar();
 }
 
-function calcStreak() {
-  let count = 0;
-  const d = new Date();
-  // Check yesterday if today not logged yet
-  if (!streakData[todayKey()]) d.setDate(d.getDate() - 1);
-  while (true) {
-    const k = dateKey(d);
-    if (streakData[k] !== 'clean') break;
-    count++;
-    d.setDate(d.getDate() - 1);
-  }
-  return count;
+function calcStreak(){
+  let c=0; const d=new Date();
+  if(!streakData[todayKey()]) d.setDate(d.getDate()-1);
+  while(streakData[dateKey(d)]==='clean'){ c++; d.setDate(d.getDate()-1); }
+  return c;
+}
+function calcBest(){
+  let b=0,c=0;
+  Object.keys(streakData).sort().forEach(k=>{ streakData[k]==='clean'?(c++,b=Math.max(b,c)):c=0; });
+  return b;
 }
 
-function calcBest() {
-  let best = 0, cur = 0;
-  const keys = Object.keys(streakData).sort();
-  for (const k of keys) {
-    if (streakData[k] === 'clean') { cur++; best = Math.max(best, cur); }
-    else cur = 0;
-  }
-  return best;
-}
+function renderCalendar(){
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML='';
+  const today=new Date(); today.setHours(0,0,0,0);
+  // start from 180 days ago, padded to Sunday
+  const start=new Date(today); start.setDate(start.getDate()-179);
+  // pad to previous Sunday
+  const pad=start.getDay();
+  start.setDate(start.getDate()-pad);
 
-function renderCalendar() {
-  const grid = document.getElementById('cal-grid');
-  grid.innerHTML = '';
-  const today = new Date();
-  // Show last 90 days
-  for (let i = 89; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const k = dateKey(d);
-    const status = streakData[k];
-    const div = document.createElement('div');
-    div.className = 'cal-day' + (status === 'clean' ? ' clean' : status === 'slip' ? ' slip' : '') + (i === 0 ? ' today' : '');
-    div.textContent = d.getDate();
-    div.onclick = () => { if (i === 0) return; };
-    grid.appendChild(div);
-  }
-}
+  const end=new Date(today);
+  const d=new Date(start);
+  while(d<=end){
+    const k=dateKey(d);
+    const isFuture=d>today;
+    const isToday=dateKey(d)===todayKey();
+    const dayNum=Math.round((d-new Date(today.getFullYear(),today.getMonth(),today.getDate()-179))/86400000)+1;
+    const isMilestone=MILESTONES.has(dayNum<0?0:dayNum);
+    const status=streakData[k];
+    const inRange = d>=new Date(today.getFullYear(),today.getMonth(),today.getDate()-179);
 
-// ── Panel navigation ────────────────────────────────────────────────────────
-function showPanel(name) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  document.getElementById('nav-' + name)?.classList.add('active');
-}
-
-// ── Notion integration ──────────────────────────────────────────────────────
-function connectNotion() {
-  document.getElementById('notion-disconnected').style.display = 'none';
-  document.getElementById('notion-token-input').style.display = 'flex';
-}
-
-function cancelNotionConnect() {
-  document.getElementById('notion-disconnected').style.display = 'block';
-  document.getElementById('notion-token-input').style.display = 'none';
-}
-
-async function saveNotionToken() {
-  const token = document.getElementById('token-field').value.trim();
-  if (!token.startsWith('secret_')) { toast('Invalid token — must start with secret_'); return; }
-  notionToken = token;
-  localStorage.setItem('notionToken', token);
-  document.getElementById('notion-token-input').style.display = 'none';
-  await showNotionConnected();
-  if (currentUser) {
-    await db.collection('users').doc(currentUser.uid).set({ notionToken: token, notionConnected: true }, { merge: true });
+    const el=document.createElement('div');
+    el.className='cal-day'+(status==='clean'?' clean':status==='slip'?' slip':'')+
+      (isToday?' today':isFuture?' future':'')+(isMilestone&&inRange?' milestone':'');
+    if(!inRange) el.style.opacity='0.08';
+    el.textContent=d.getDate();
+    if(!isFuture && inRange){
+      const key=k;
+      el.onclick=()=>openModal(key,d);
+    }
+    grid.appendChild(el);
+    d.setDate(d.getDate()+1);
   }
 }
 
-async function showNotionConnected() {
-  document.getElementById('notion-disconnected').style.display = 'none';
-  document.getElementById('notion-token-input').style.display = 'none';
-  document.getElementById('notion-connected').style.display = 'flex';
-  await loadNotionPages();
+// ── Modal ──
+function openModal(key, date){
+  modalKey=key;
+  document.getElementById('modal-date').textContent=date.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  const overlay=document.getElementById('day-modal');
+  overlay.classList.add('open');
+}
+function closeModal(e){
+  if(e.target===document.getElementById('day-modal')) document.getElementById('day-modal').classList.remove('open');
+}
+function modalCheckIn(status){
+  if(!modalKey) return;
+  if(status===null) delete streakData[modalKey]; else streakData[modalKey]=status;
+  persist(modalKey,status);
+  document.getElementById('day-modal').classList.remove('open');
+  updateUI();
+  toast(status==='clean'?'✓ Marked clean':status==='slip'?'Marked as slipped':'Day cleared');
 }
 
-async function loadNotionPages() {
-  const sel = document.getElementById('page-select');
-  sel.innerHTML = '<option>Loading...</option>';
-  try {
-    const res = await fetch(`${NOTION_PROXY}/pages`, {
-      headers: { 'x-notion-token': notionToken }
-    });
-    const data = await res.json();
-    const pages = data.results
-      .filter(p => p.object === 'page')
-      .map(p => ({ id: p.id, title: getTitle(p) }));
-
-    sel.innerHTML = '<option value="">— Select a page —</option>' +
-      pages.map(p => `<option value="${p.id}" ${p.id===selectedPageId?'selected':''}>${p.title}</option>`).join('');
-
-    if (selectedPageId) loadTimetablePreview(selectedPageId);
-  } catch(e) {
-    sel.innerHTML = '<option>Error loading pages</option>';
-    toast('Could not reach Notion proxy');
-  }
+// ── Panels ──
+function showPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  const nb=document.getElementById('nav-'+name);
+  if(nb) nb.classList.add('active');
 }
 
-async function onPageSelect(pageId) {
-  if (!pageId) return;
-  selectedPageId = pageId;
-  localStorage.setItem('notionPageId', pageId);
-  if (currentUser) {
-    await db.collection('users').doc(currentUser.uid).set({ selectedPageId: pageId }, { merge: true });
-  }
-  loadTimetablePreview(pageId);
+// ── Notion ──
+function connectNotion(){
+  document.getElementById('notion-disconnected').style.display='none';
+  document.getElementById('notion-token-input').style.display='flex';
 }
-
-async function loadTimetablePreview(pageId) {
-  const preview = document.getElementById('timetable-preview');
-  preview.style.display = 'block';
-  preview.innerHTML = '<div class="tp-row"><span style="color:var(--muted);font-size:0.8rem">Loading...</span></div>';
-  try {
-    const res = await fetch(`${NOTION_PROXY}/blocks/${pageId}/children`, {
-      headers: { 'x-notion-token': notionToken }
-    });
-    const data = await res.json();
-    const tables = data.results.filter(b => b.type === 'table');
-    if (!tables.length) { preview.innerHTML = '<div class="tp-row"><span style="color:var(--muted)">No timetable found on this page</span></div>'; return; }
-
-    for (const table of tables) {
-      const rows = await fetchChildren(table.id);
-      const parsed = parseTimetable(rows);
-      if (parsed.length > 0) {
-        preview.innerHTML = parsed.map(e =>
-          `<div class="tp-row"><span class="tp-time">${e.start}</span><span class="tp-block">${e.block}</span></div>`
-        ).join('');
-        // Also update schedule panel
-        document.getElementById('schedule-content').innerHTML = parsed.map(e =>
-          `<div class="tp-row" style="border-bottom:1px solid var(--border)">
-            <span class="tp-time">${e.start}</span>
-            <div><div class="tp-block">${e.block}</div><div style="font-size:0.7rem;color:var(--muted)">${e.task}</div></div>
-          </div>`
-        ).join('');
+function cancelNotion(){
+  document.getElementById('notion-disconnected').style.display='block';
+  document.getElementById('notion-token-input').style.display='none';
+}
+async function saveNotionToken(){
+  const t=document.getElementById('token-field').value.trim();
+  if(!t.startsWith('secret_')&&!t.startsWith('ntn_')){ toast('Invalid token'); return; }
+  notionToken=t; localStorage.setItem('notionToken',t);
+  document.getElementById('notion-token-input').style.display='none';
+  await showConnected();
+  if(currentUser) await db.collection('users').doc(currentUser.uid).set({notionToken:t,notionConnected:true},{merge:true});
+}
+async function showConnected(){
+  document.getElementById('notion-disconnected').style.display='none';
+  document.getElementById('notion-token-input').style.display='none';
+  document.getElementById('notion-connected').style.display='flex';
+  await loadPages();
+}
+async function loadPages(){
+  const sel=document.getElementById('page-select');
+  sel.innerHTML='<option>Loading...</option>';
+  try{
+    const res=await fetch(`${NOTION_PROXY}/pages`,{headers:{'x-notion-token':notionToken}});
+    const data=await res.json();
+    const pages=data.results.filter(p=>p.object==='page').map(p=>({id:p.id,title:getTitle(p)}));
+    sel.innerHTML='<option value="">— Select a page —</option>'+
+      pages.map(p=>`<option value="${p.id}"${p.id===selPageId?' selected':''}>${p.title}</option>`).join('');
+    if(selPageId) loadTTPreview(selPageId);
+  }catch(e){ sel.innerHTML='<option>Error — check worker</option>'; }
+}
+async function onPageSelect(id){
+  if(!id) return;
+  selPageId=id; localStorage.setItem('notionPageId',id);
+  if(currentUser) await db.collection('users').doc(currentUser.uid).set({selectedPageId:id},{merge:true});
+  loadTTPreview(id);
+}
+async function loadTTPreview(id){
+  const prev=document.getElementById('tt-preview');
+  prev.style.display='block'; prev.innerHTML='<div class="tt-row"><span style="color:var(--muted)">Loading...</span></div>';
+  try{
+    const res=await fetch(`${NOTION_PROXY}/blocks/${id}/children`,{headers:{'x-notion-token':notionToken}});
+    const data=await res.json();
+    const tables=data.results.filter(b=>b.type==='table');
+    for(const t of tables){
+      const rows=await (await fetch(`${NOTION_PROXY}/blocks/${t.id}/children`,{headers:{'x-notion-token':notionToken}})).json();
+      const parsed=parseTT(rows.results||[]);
+      if(parsed.length){
+        prev.innerHTML=parsed.map(e=>`<div class="tt-row"><span class="tt-t">${e.start}</span><span>${e.block}</span></div>`).join('');
+        renderSchedule(parsed);
         return;
       }
     }
-    preview.innerHTML = '<div class="tp-row"><span style="color:var(--muted)">No Start/End columns found — check table format</span></div>';
-  } catch(e) {
-    preview.innerHTML = '<div class="tp-row"><span style="color:var(--slip)">Error loading timetable</span></div>';
-  }
+    prev.innerHTML='<div class="tt-row"><span style="color:var(--muted)">No Start/End timetable found</span></div>';
+  }catch(e){ prev.innerHTML='<div class="tt-row"><span style="color:var(--slip)">Error</span></div>'; }
+}
+function parseTT(rows){
+  if(rows.length<2) return [];
+  const h=getCells(rows[0]).map(x=>x.toLowerCase());
+  const si=h.indexOf('start'),ei=h.indexOf('end'),bi=h.indexOf('block'),ti=h.indexOf('task');
+  if(si===-1||ei===-1) return [];
+  return rows.slice(1).map(r=>{const c=getCells(r);return{start:c[si]||'',end:c[ei]||'',block:c[bi]||'',task:c[ti]||''};}).filter(r=>r.start);
+}
+function getCells(row){ return (row.table_row?.cells||[]).map(c=>c.map(t=>t.plain_text).join('')); }
+function getTitle(p){
+  for(const k of Object.keys(p.properties||{})){const t=p.properties[k]?.title?.[0]?.plain_text;if(t)return t;}
+  return p.id.slice(0,8);
+}
+function renderSchedule(entries){
+  const now=new Date(); const cur=now.getHours()*60+now.getMinutes();
+  document.getElementById('schedule-content').innerHTML=entries.map(e=>{
+    const sm=timeToMin(e.start),em=timeToMin(e.end);
+    const isNow=sm!==null&&em!==null&&cur>=sm&&cur<em;
+    return `<div class="sched-row${isNow?' now-indicator':''}">
+      <span class="sched-time">${e.start}</span>
+      <div><div class="sched-block">${e.block}</div><div class="sched-task">${e.task}</div></div>
+    </div>`;
+  }).join('');
+}
+function timeToMin(s){
+  const m=s.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if(!m)return null;
+  let h=parseInt(m[1]);const min=parseInt(m[2]);
+  if(m[3].toUpperCase()==='PM'&&h!==12)h+=12;
+  if(m[3].toUpperCase()==='AM'&&h===12)h=0;
+  return h*60+min;
+}
+function disconnectNotion(){
+  notionToken=null;selPageId=null;
+  localStorage.removeItem('notionToken');localStorage.removeItem('notionPageId');
+  document.getElementById('notion-connected').style.display='none';
+  document.getElementById('notion-disconnected').style.display='block';
+  if(currentUser) db.collection('users').doc(currentUser.uid).update({notionConnected:false,notionToken:null});
 }
 
-async function fetchChildren(blockId) {
-  const res = await fetch(`${NOTION_PROXY}/blocks/${blockId}/children`, {
-    headers: { 'x-notion-token': notionToken }
-  });
-  const d = await res.json();
-  return d.results || [];
-}
-
-function parseTimetable(rows) {
-  if (rows.length < 2) return [];
-  const header = getCells(rows[0]).map(h => h.toLowerCase());
-  const si = header.indexOf('start'), ei = header.indexOf('end');
-  const bi = header.indexOf('block'), ti = header.indexOf('task');
-  if (si === -1 || ei === -1) return [];
-  return rows.slice(1).map(row => {
-    const c = getCells(row);
-    return { start: c[si]||'', end: c[ei]||'', block: c[bi]||'', task: c[ti]||'' };
-  }).filter(r => r.start);
-}
-
-function getCells(row) {
-  return (row.table_row?.cells || []).map(c => c.map(t => t.plain_text).join(''));
-}
-
-function getTitle(page) {
-  const props = page.properties || {};
-  for (const k of Object.keys(props)) {
-    const t = props[k]?.title?.[0]?.plain_text;
-    if (t) return t;
-  }
-  return page.id.slice(0,8);
-}
-
-function disconnectNotion() {
-  notionToken = null; selectedPageId = null;
-  localStorage.removeItem('notionToken'); localStorage.removeItem('notionPageId');
-  document.getElementById('notion-connected').style.display = 'none';
-  document.getElementById('notion-disconnected').style.display = 'block';
-  if (currentUser) db.collection('users').doc(currentUser.uid).update({ notionConnected: false, notionToken: null });
-}
-
-// ── FCM Push ────────────────────────────────────────────────────────────────
-async function enablePush() {
-  if (!messaging) { toast('Push not supported in this browser'); return; }
-  const statusEl = document.getElementById('push-status');
-  try {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') { toast('Permission denied'); return; }
-    const token = await messaging.getToken({ vapidKey: VAPID_KEY });
-    localStorage.setItem('fcmToken', token);
-    if (currentUser) {
-      await db.collection('users').doc(currentUser.uid).set({ fcmToken: token }, { merge: true });
-    }
-    statusEl.textContent = '✓ Push notifications enabled';
-    statusEl.style.color = 'var(--clean)';
+// ── Push ──
+async function enablePush(){
+  if(!messaging){toast('Push not supported');return;}
+  const st=document.getElementById('push-status');
+  try{
+    if(await Notification.requestPermission()!=='granted'){toast('Permission denied');return;}
+    const tok=await messaging.getToken({vapidKey:VAPID_KEY});
+    localStorage.setItem('fcmToken',tok);
+    if(currentUser) await db.collection('users').doc(currentUser.uid).set({fcmToken:tok},{merge:true});
+    st.textContent='✓ Push enabled'; st.style.color='var(--clean)';
     toast('Push notifications enabled!');
-  } catch(e) {
-    statusEl.textContent = 'Failed: ' + e.message;
-    toast('Push setup failed');
-  }
+  }catch(e){ st.textContent='Failed: '+e.message; }
+}
+function savePref(k,v){
+  if(currentUser) db.collection('users').doc(currentUser.uid).set({['notif_'+k]:v},{merge:true});
 }
 
-async function saveNotifPref(type, val) {
-  if (currentUser) {
-    await db.collection('users').doc(currentUser.uid).set(
-      { [`notif_${type}`]: val }, { merge: true }
-    );
-  }
+// ── SW ──
+function registerSW(){
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
 }
 
-// ── Service Worker ───────────────────────────────────────────────────────────
-function registerSW() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(console.error);
-  }
-}
-
-// ── Utils ────────────────────────────────────────────────────────────────────
-function todayKey() { return dateKey(new Date()); }
-function dateKey(d) {
+// ── Utils ──
+function todayKey(){ return dateKey(new Date()); }
+function dateKey(d){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-function resetData() {
-  if (!confirm('Delete all streak data? This cannot be undone.')) return;
-  streakData = {};
+function resetData(){
+  if(!confirm('Delete ALL streak data?')) return;
+  streakData={};
   localStorage.removeItem('streakData');
-  if (currentUser) {
-    // Delete all day docs
-    db.collection('streaks').doc(currentUser.uid).collection('days').get()
-      .then(snap => snap.forEach(d => d.ref.delete()));
-  }
-  updateUI();
-  toast('All data reset');
+  if(currentUser) db.collection('streaks').doc(currentUser.uid).collection('days').get()
+    .then(s=>s.forEach(d=>d.ref.delete()));
+  updateUI(); toast('All data reset');
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
 }
 </script>
 </body>

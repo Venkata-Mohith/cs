@@ -594,7 +594,8 @@ let streakData  = {};
 let notionToken = localStorage.getItem('notionToken') || null;
 let selPageId   = localStorage.getItem('notionPageId') || null;
 let modalKey    = null;
-
+// Store the active Service Worker registration
+let swRegistration = null;
 // ── Auth ──
 auth.onAuthStateChanged(u => {
   currentUser = u;
@@ -863,25 +864,110 @@ function disconnectNotion(){
 }
 
 // ── Push ──
-async function enablePush(){
-  if(!messaging){toast('Push not supported');return;}
-  const st=document.getElementById('push-status');
-  try{
-    if(await Notification.requestPermission()!=='granted'){toast('Permission denied');return;}
-    const tok=await messaging.getToken({vapidKey:VAPID_KEY});
-    localStorage.setItem('fcmToken',tok);
-    if(currentUser) await db.collection('users').doc(currentUser.uid).set({fcmToken:tok},{merge:true});
-    st.textContent='✓ Push enabled'; st.style.color='var(--clean)';
-    toast('Push notifications enabled!');
-  }catch(e){ st.textContent='Failed: '+e.message; }
+async function enablePush() {
+
+  if (!messaging) {
+    toast("Push notifications aren't supported.");
+    return;
+  }
+
+  const status = document.getElementById("push-status");
+
+  try {
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== "granted") {
+
+      toast("Notification permission denied.");
+
+      return;
+
+    }
+
+    // Make sure Service Worker exists
+
+    if (!swRegistration) {
+
+      swRegistration = await registerSW();
+
+    }
+
+    await navigator.serviceWorker.ready;
+    console.log(swRegistration);
+
+    const token = await messaging.getToken({
+
+      vapidKey: VAPID_KEY,
+
+      serviceWorkerRegistration: swRegistration
+
+    });
+
+    console.log("FCM Token:", token);
+
+    localStorage.setItem("fcmToken", token);
+
+    if (currentUser) {
+
+      await db.collection("users")
+        .doc(currentUser.uid)
+        .set({
+
+          fcmToken: token
+
+        }, { merge: true });
+
+    }
+
+    status.textContent = "✓ Push Notifications Enabled";
+    status.style.color = "var(--clean)";
+
+    toast("Push Notifications Enabled!");
+
+  }
+
+  catch (err) {
+
+    console.error(err);
+
+    status.textContent = "Failed: " + err.message;
+
+  }
+
 }
 function savePref(k,v){
   if(currentUser) db.collection('users').doc(currentUser.uid).set({['notif_'+k]:v},{merge:true});
 }
 
 // ── SW ──
-function registerSW(){
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+async function registerSW() {
+
+  if (!('serviceWorker' in navigator)) {
+    console.log("Service Workers not supported.");
+    return null;
+  }
+
+  try {
+
+    swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+    console.log("✅ Service Worker Registered");
+
+    await navigator.serviceWorker.ready;
+
+    console.log("✅ Service Worker Active");
+
+    return swRegistration;
+
+  } catch (err) {
+
+    console.error("❌ Service Worker Registration Failed:", err);
+
+    return null;
+
+  }
+
 }
 
 // ── Utils ──
@@ -902,6 +988,11 @@ function toast(msg){
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2800);
 }
+window.addEventListener("load", async () => {
+
+  await registerSW();
+
+});
 </script>
 </body>
 </html>

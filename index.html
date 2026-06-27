@@ -864,77 +864,30 @@ function disconnectNotion(){
 }
 
 // ── Push ──
-async function enablePush() {
-
-  if (!messaging) {
-    toast("Push notifications aren't supported.");
-    return;
-  }
-
-  const status = document.getElementById("push-status");
-
-  try {
-
-    const permission = await Notification.requestPermission();
-
-    if (permission !== "granted") {
-
-      toast("Notification permission denied.");
-
-      return;
-
+async function enablePush(){
+  if(!messaging){toast('Push not supported');return;}
+  const st=document.getElementById('push-status');
+  try{
+    if(Notification.permission!=='granted'){
+      const perm=await Notification.requestPermission();
+      if(perm!=='granted'){toast('Permission denied');return;}
     }
-
-    // Make sure Service Worker exists
-
-    if (!swRegistration) {
-
-      swRegistration = await registerSW();
-
-    }
-
+    // Wait for SW to be fully ready
+    const reg=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     await navigator.serviceWorker.ready;
-    console.log(swRegistration);
-
-    const token = await messaging.getToken({
-
-      vapidKey: VAPID_KEY,
-
-      serviceWorkerRegistration: swRegistration
-
+    // Extra wait to ensure activation
+    await new Promise(r=>setTimeout(r,1000));
+    const token=await messaging.getToken({
+      vapidKey:VAPID_KEY,
+      serviceWorkerRegistration:reg
     });
-
-    console.log("FCM Token:", token);
-
-    localStorage.setItem("fcmToken", token);
-
-    if (currentUser) {
-
-      await db.collection("users")
-        .doc(currentUser.uid)
-        .set({
-
-          fcmToken: token
-
-        }, { merge: true });
-
-    }
-
-    status.textContent = "✓ Push Notifications Enabled";
-    status.style.color = "var(--clean)";
-
-    toast("Push Notifications Enabled!");
-
+    localStorage.setItem('fcmToken',token);
+    if(currentUser) await db.collection('users').doc(currentUser.uid).set({fcmToken:token},{merge:true});
+    st.textContent='✓ Push enabled'; st.style.color='var(--clean)';
+    toast('Push notifications enabled!');
+  }catch(e){
+    st.textContent='Failed: '+e.message;
   }
-
-  catch (err) {
-
-    console.error(err);
-
-    status.textContent = "Failed: " + err.message;
-
-  }
-
 }
 function savePref(k,v){
   if(currentUser) db.collection('users').doc(currentUser.uid).set({['notif_'+k]:v},{merge:true});

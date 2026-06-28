@@ -14,23 +14,8 @@ firebase.initializeApp({
   appId: "1:126724532219:web:3a5f98af4f3778f82e8d5e"
 });
 
-const messaging = firebase.messaging();
-
-// ── Background push handler ─────────────────────────────────────────────────
-// Fires when app is closed or in background
-messaging.onBackgroundMessage((payload) => {
-  const { title, body, icon } = payload.notification || {};
-  self.registration.showNotification(title || 'CleanStreak', {
-    body: body || '',
-    icon: icon || '/icon-192.png',
-    badge: '/icon-72.png',
-    vibrate: [200, 100, 200],
-    data: payload.data || {},
-    actions: [
-      { action: 'open', title: '✓ Open App' }
-    ]
-  });
-});
+// Keep this worker focused on offline cache and legacy app support.
+// Firebase messaging is handled by firebase-messaging-sw.js only.
 
 // ── Notification click ──────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (e) => {

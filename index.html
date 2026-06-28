@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="theme-color" content="#0d0d0d"/>
+  <meta name="theme-color" content="#050505"/>
   <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <title>CleanStreak v4.1</title>
+  <title>CleanStreak v4.2</title>
   <link rel="manifest" href="/manifest.json"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -32,17 +32,30 @@
     html{scroll-behavior:smooth}
     body{
       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-      background:radial-gradient(circle at top left, rgba(184,255,77,0.06), transparent 24%), radial-gradient(circle at bottom right, rgba(184,255,77,0.02), transparent 28%), #040404;
+      background:var(--bg);
       color:var(--text);
       min-height:100vh;overscroll-behavior:none;
       -webkit-tap-highlight-color:transparent;
       -webkit-font-smoothing:antialiased;
+      transition:background 2s ease;
     }
-    button,input,select,textarea{-webkit-tap-highlight-color:transparent;outline:none}
+    button,input,select,textarea{-webkit-tap-highlight-color:transparent;outline:none;font-family:inherit}
     .hidden{display:none!important}
-    .soft-glow{box-shadow:0 0 0 1px rgba(184,255,77,0.05),0 22px 50px rgba(0,0,0,0.24)}
+
+    /* ── Breathing animation ── */
     .breathing{animation:breath 3.2s ease-in-out infinite}
-    @keyframes breath{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+    @keyframes breath{0%,100%{transform:scale(1)}50%{transform:scale(1.018)}}
+
+    /* ── Confetti ── */
+    .confetti-piece{
+      position:fixed;width:8px;height:8px;border-radius:2px;
+      pointer-events:none;z-index:999;
+      animation:confettiFall 1.4s ease forwards;
+    }
+    @keyframes confettiFall{
+      0%{transform:translateY(-20px) rotate(0deg);opacity:1}
+      100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+    }
 
     /* ── Auth ── */
     #auth-screen{
@@ -63,53 +76,45 @@
       width:100%;max-width:320px;padding:0.9rem 1.5rem;
       border:none;border-radius:var(--r);font-size:0.95rem;
       font-weight:700;cursor:pointer;
-      transition:transform 0.1s,opacity 0.15s;
-      will-change:transform;
+      transition:transform 0.1s,opacity 0.15s;will-change:transform;
     }
     .btn:active{transform:scale(0.97);opacity:0.85}
     .btn-primary{background:var(--accent);color:#000}
     .btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}
 
-    .hidden{display:none!important}
-    .onboard-screen{
-      position:fixed;inset:0;background:rgba(1,1,1,0.92);z-index:300;
-      display:flex;align-items:center;justify-content:center;padding:1.5rem;
+    /* ── Onboarding ── */
+    #onboard-screen{
+      display:none;position:fixed;inset:0;
+      background:rgba(1,1,1,0.95);z-index:300;
+      align-items:center;justify-content:center;padding:1.5rem;
     }
+    #onboard-screen.open{display:flex}
     .onboard-card{
-      width:min(100%,540px);background:rgba(15,15,15,0.98);
+      width:min(100%,520px);background:rgba(13,13,13,0.99);
       border:1px solid rgba(255,255,255,0.07);border-radius:24px;
       padding:2rem;box-shadow:var(--shadow);
     }
-    .onboard-header{margin-bottom:1.2rem}
-    .onboard-header .auth-logo{font-size:1.6rem}
-    .step-label{font-size:0.75rem;color:var(--muted);letter-spacing:1.6px;text-transform:uppercase;margin-bottom:0.8rem}
-    .onboard-card h2{font-size:1.9rem;line-height:1.05;margin-bottom:0.6rem}
-    .onboard-card p{color:var(--muted2);margin-bottom:1.4rem;line-height:1.6}
+    .onboard-header{margin-bottom:1.4rem}
+    .onboard-header .auth-logo{font-size:1.5rem}
+    .step-label{font-size:0.72rem;color:var(--muted);letter-spacing:1.6px;text-transform:uppercase;margin-bottom:0.8rem}
+    .onboard-card h2{font-size:1.8rem;font-weight:900;line-height:1.05;margin-bottom:0.6rem}
+    .onboard-card p{color:var(--muted2);margin-bottom:1.2rem;line-height:1.6;font-size:0.9rem}
     .onboard-choice-row{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-top:0.6rem}
     .onboard-action-row{display:flex;justify-content:space-between;gap:0.8rem;margin-top:1rem}
     .onboard-action-row .btn{flex:1}
-    #onboard-screen{display:none;position:fixed;inset:0;background:rgba(1,1,1,0.92);z-index:300;display:flex;align-items:center;justify-content:center;padding:1.5rem;}
-    .onboard-card{
-      width:min(100%,540px);background:rgba(15,15,15,0.98);
-      border:1px solid rgba(255,255,255,0.07);border-radius:24px;
-      padding:2rem;box-shadow:var(--shadow);
-    }
-    .onboard-header{margin-bottom:1.2rem}
-    .onboard-header .auth-logo{font-size:1.6rem}
-    .onboard-step{display:none;opacity:0;transform:translateY(6px);transition:opacity 0.25s ease,transform 0.25s ease}
+    .onboard-step{display:none;opacity:0;transform:translateY(8px);transition:opacity 0.28s ease,transform 0.28s ease}
     .onboard-step.active{display:block;opacity:1;transform:translateY(0)}
     #habit-word,#failure-reason{
       width:100%;background:var(--surface2);color:var(--text);
       border:1px solid var(--border);border-radius:16px;
       padding:0.95rem 1rem;font-size:0.95rem;resize:none;
+      transition:border-color 0.2s;
     }
-    #habit-word:focus,#failure-reason:focus{border-color:var(--accent);}
-    .onboard-warning{margin-top:0.8rem;color:#ff8f8f;font-size:0.9rem;min-height:1.3rem}
-    .onboard-success{margin-top:1rem;color:var(--accent);font-size:0.95rem;line-height:1.5}
-    .snap-out{animation:snap 0.45s ease forwards}
-    .thanos-snap{animation:thanosSnap 0.8s ease forwards;transform-origin:center center;}
-    @keyframes snap{0%{transform:scale(1)}50%{transform:scale(0.92)}100%{transform:scale(0);opacity:0}}
-    @keyframes thanosSnap{0%{opacity:1;transform:scale(1) rotate(0deg);filter:blur(0);}45%{opacity:0.85;transform:scale(0.92) rotate(-5deg);filter:blur(0);}80%{opacity:0.45;transform:scale(0.45) rotate(12deg);filter:blur(2px);}100%{opacity:0;transform:scale(0) rotate(42deg);filter:blur(10px);}}
+    #habit-word:focus,#failure-reason:focus{border-color:var(--accent)}
+    .onboard-warning{margin-top:0.8rem;color:#ff8f8f;font-size:0.85rem;min-height:1.3rem;transition:all 0.2s}
+    .onboard-success{margin-top:1rem;color:var(--accent);font-size:0.9rem;line-height:1.5}
+    @keyframes snapOut{0%{opacity:1;transform:scale(1) rotate(0deg);filter:blur(0)}20%{opacity:0.95;transform:scale(0.98) rotate(-1deg);filter:blur(0)}50%{opacity:0.7;transform:scale(0.88) rotate(4deg);filter:blur(1px)}75%{opacity:0.35;transform:scale(0.55) rotate(14deg);filter:blur(4px)}100%{opacity:0;transform:scale(0.1) rotate(38deg);filter:blur(12px)}}
+    .thanos-snap{animation:snapOut 2.2s cubic-bezier(.4,0,.2,1) forwards}
 
     /* ── App shell ── */
     #app{display:none;max-width:430px;margin:0 auto;padding-bottom:72px}
@@ -120,6 +125,7 @@
       padding:1rem 1.2rem 0.7rem;
       position:sticky;top:0;background:var(--bg);z-index:10;
       border-bottom:1px solid var(--border);
+      transition:background 2s ease;
     }
     .h-logo{font-size:1.05rem;font-weight:900;letter-spacing:-0.5px}
     .h-logo span{color:var(--accent)}
@@ -136,102 +142,81 @@
 
     /* ── Panels ── */
     .panel{display:none}
-    .panel.active{display:block}
-
-    /* ── Section ── */
+    .panel.active{display:block;animation:fadeIn 0.22s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
     section{padding:1rem 1.2rem;border-bottom:1px solid var(--border)}
-    .sec-title{
-      font-size:0.68rem;font-weight:700;color:var(--muted);
-      letter-spacing:1.8px;text-transform:uppercase;margin-bottom:0.9rem;
-    }
+    .sec-title{font-size:0.68rem;font-weight:700;color:var(--muted);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:0.9rem}
 
     /* ── Streak card ── */
     .streak-card{
       background:var(--surface);border-radius:var(--r);
       padding:1.6rem 1.2rem 1.2rem;text-align:center;
-      position:relative;overflow:hidden;
-      border:1px solid var(--border);
+      position:relative;overflow:hidden;border:1px solid var(--border);
     }
     .streak-card::before{
       content:'';position:absolute;inset:0;
-      background:radial-gradient(ellipse at 50% -20%,rgba(212,255,79,0.07) 0%,transparent 65%);
-      pointer-events:none;
+      background:radial-gradient(ellipse at 50% -20%,rgba(184,255,77,0.07) 0%,transparent 65%);
+      pointer-events:none;transition:opacity 1s;
     }
     .streak-num{
       font-size:5.5rem;font-weight:900;line-height:1;
       color:var(--accent);letter-spacing:-5px;
       font-variant-numeric:tabular-nums;
+      display:inline-block;
+      animation:breath 3.2s ease-in-out infinite;
     }
     .streak-lbl{color:var(--muted);font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;margin-top:0.2rem}
-    .streak-msg{margin-top:0.9rem;font-size:0.85rem;color:var(--muted2);line-height:1.4}
+    .streak-word-tag{
+      display:inline-block;margin-top:0.5rem;
+      background:var(--accent-dim);color:var(--accent);
+      font-size:0.66rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+      padding:0.22rem 0.6rem;border-radius:20px;border:1px solid rgba(184,255,77,0.18);
+    }
+    .streak-msg{margin-top:0.7rem;font-size:0.85rem;color:var(--muted2);line-height:1.4}
 
     /* ── Progress ── */
-    .progress-wrap{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:var(--r);padding:1rem;margin-top:0.8rem;
-    }
+    .progress-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-top:0.8rem}
     .progress-top{display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:0.6rem}
     .progress-top span:last-child{color:var(--muted)}
     .pbar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
-    .pfill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.6s cubic-bezier(.4,0,.2,1)}
+    .pfill{height:100%;background:var(--accent);border-radius:3px;transition:width 0.7s cubic-bezier(.4,0,.2,1)}
     .milestones{display:flex;justify-content:space-between;margin-top:0.7rem}
-    .ms{font-size:0.62rem;color:var(--muted);text-align:center;transition:color 0.3s}
+    .ms{font-size:0.62rem;color:var(--muted);text-align:center;transition:color 0.5s}
     .ms.hit{color:var(--accent)}
-    .ms-dot{
-      width:6px;height:6px;border-radius:50%;background:var(--border);
-      margin:0 auto 3px;transition:background 0.3s;
-    }
-    .ms.hit .ms-dot{background:var(--accent)}
+    .ms-dot{width:6px;height:6px;border-radius:50%;background:var(--border);margin:0 auto 3px;transition:background 0.5s,box-shadow 0.5s}
+    .ms.hit .ms-dot{background:var(--accent);box-shadow:0 0 6px var(--accent)}
 
     /* ── Check-in ── */
     .checkin-row{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.9rem}
-    .btn-clean,.btn-slip{
-      border-radius:var(--r);padding:0.9rem;font-size:0.9rem;font-weight:700;
-      cursor:pointer;border:none;transition:transform 0.1s,opacity 0.15s;
-      will-change:transform;
-    }
+    .btn-clean,.btn-slip{border-radius:var(--r);padding:0.9rem;font-size:0.9rem;font-weight:700;cursor:pointer;border:none;transition:transform 0.1s,opacity 0.15s;will-change:transform}
     .btn-clean:active,.btn-slip:active{transform:scale(0.96)}
-    .btn-clean{background:var(--clean-dim);color:var(--clean);border:1px solid rgba(61,220,132,0.2)}
+    .btn-clean{background:var(--clean-dim);color:var(--clean);border:1px solid rgba(118,245,143,0.2)}
     .btn-slip{background:var(--slip-dim);color:var(--slip);border:1px solid rgba(255,107,107,0.15)}
 
     /* ── Stats ── */
     .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem}
-    .stat{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:var(--r);padding:0.9rem 0.5rem;text-align:center;
-    }
+    .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:0.9rem 0.5rem;text-align:center}
     .stat-val{font-size:1.6rem;font-weight:900;color:var(--accent)}
     .stat-lbl{font-size:0.65rem;color:var(--muted);margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.5px}
 
     /* ── Calendar ── */
-    .cal-header{
-      display:grid;grid-template-columns:repeat(7,1fr);
-      gap:2px;margin-bottom:4px;
-    }
+    .cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
     .cal-dh{font-size:0.6rem;color:var(--muted);text-align:center;padding:3px 0}
     .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
     .cal-day{
       aspect-ratio:1;border-radius:8px;background:var(--surface);
       display:flex;align-items:center;justify-content:center;
       font-size:0.62rem;color:var(--muted);cursor:pointer;
-      border:1px solid transparent;
-      transition:transform 0.1s,background 0.2s;
-      position:relative;will-change:transform;
+      border:1px solid transparent;position:relative;
+      transition:transform 0.1s,background 0.2s;will-change:transform;
     }
-    .cal-day:active{transform:scale(0.88)}
-    .cal-day.clean{background:var(--clean-dim);color:var(--clean);border-color:rgba(61,220,132,0.15)}
+    .cal-day:active{transform:scale(0.86)}
+    .cal-day.clean{background:var(--clean-dim);color:var(--clean);border-color:rgba(118,245,143,0.15)}
     .cal-day.slip{background:var(--slip-dim);color:var(--slip);border-color:rgba(255,107,107,0.1)}
     .cal-day.today{border-color:var(--accent);color:var(--text)}
-    .cal-day.future{opacity:0.2;cursor:default;pointer-events:none}
-    .cal-day.milestone::after{
-      content:'★';position:absolute;top:-1px;right:-1px;
-      font-size:0.45rem;color:var(--accent);line-height:1;
-    }
-
-    /* Milestone legend */
-    .cal-legend{
-      display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.8rem;
-    }
+    .cal-day.future{opacity:0.15;cursor:default;pointer-events:none}
+    .cal-day.milestone::after{content:'★';position:absolute;top:-1px;right:-1px;font-size:0.42rem;color:var(--accent);line-height:1}
+    .cal-legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.8rem}
     .legend-item{display:flex;align-items:center;gap:0.3rem;font-size:0.68rem;color:var(--muted2)}
     .legend-dot{width:8px;height:8px;border-radius:50%}
 
@@ -248,168 +233,67 @@
       padding:1.5rem;width:100%;max-width:430px;
       border-top:1px solid var(--border);
       transform:translateY(24px);opacity:0;
-      transition:transform 0.32s cubic-bezier(.22,.61,.36,1),opacity 0.28s ease;
+      transition:transform 0.35s cubic-bezier(.22,.61,.36,1),opacity 0.28s ease;
     }
     .modal-overlay.open .modal{transform:translateY(0);opacity:1}
     .modal-date{font-size:0.8rem;color:var(--muted);margin-bottom:1rem;text-align:center}
     .modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.9rem}
-    .modal-clear{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--r);padding:0.8rem;font-size:0.9rem;cursor:pointer;transition:opacity 0.15s;}
-    .modal-clear:active{opacity:0.6}
-    .modal-clear:hover{background:rgba(255,255,255,0.02)}
-    .nav-btn{display:flex;align-items:center;gap:0.65rem;justify-content:center;cursor:pointer;padding:0.7rem 0.5rem;color:var(--muted);font-size:0.75rem;font-weight:700;letter-spacing:0.2px;background:none;border:none;transition:color 0.2s,background 0.2s,transform 0.1s;}
-    .nav-btn:active{transform:scale(0.96)}
-    .nav-btn.active{color:var(--accent);background:rgba(184,255,77,0.08);border-radius:999px;}
-    .nav-icon{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:inherit;}
-    .nav-btn span{display:flex;align-items:center;gap:0.5rem;}
-    #toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.75rem 1.3rem;border-radius:22px;font-size:0.82rem;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;z-index:100;}
-    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-    #onboard-screen{display:none}
-    .panel{animation:none}
-    .panel.active{animation:fadeIn 0.22s ease}
-
-    @media (min-width:900px){
-      body{background:radial-gradient(circle at top left, rgba(184,255,77,0.08), transparent 20%), radial-gradient(circle at bottom right, rgba(184,255,77,0.04), transparent 24%), #030303;}
-      #app{display:grid;grid-template-columns:220px minmax(640px,1fr);gap:1rem;max-width:1400px;padding:2rem 2rem 3rem;}
-      header{grid-column:1/-1;position:relative;display:flex;align-items:center;justify-content:space-between;padding:1rem 0 0;border-bottom:1px solid rgba(255,255,255,0.06);}
-      .panel{grid-column:2/3;background:rgba(7,7,7,0.92);box-shadow:var(--shadow);border-radius:var(--r);border:1px solid rgba(255,255,255,0.05);}
-      .panel section{padding:1.4rem 1.4rem 1.6rem;}
-      nav{position:sticky;top:1rem;grid-row:2;grid-column:1/2;padding:1.2rem 0;background:rgba(7,7,7,0.94);border-radius:24px;border:1px solid rgba(255,255,255,0.06);height:calc(100vh - 4rem);}
-      .nav-btn{justify-content:flex-start;padding:0.95rem 1.1rem;width:100%;font-size:0.92rem;border-radius:16px;}
-      .nav-btn.active{background:rgba(184,255,77,0.12);color:var(--accent-strong);}
-      .cal-grid{gap:6px}
-      .cal-day{border-radius:16px;min-height:62px;}
-      .streak-card{padding:2rem 1.4rem 1.4rem;}
-      .streak-num{font-size:6rem;}
-      .btn-clean,.btn-slip{font-size:0.95rem;padding:1rem;}
-      .checkin-row{gap:1rem;}
-      .stats-row{grid-template-columns:1fr 1fr 1fr;}
-      .science-card{padding:1.4rem;}
-    }
-
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-    .modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:0.7rem}
-    .modal-clear{
-      width:100%;background:transparent;color:var(--muted);
-      border:1px solid var(--border);border-radius:var(--r);
-      padding:0.7rem;font-size:0.85rem;cursor:pointer;
-      transition:opacity 0.15s;
-    }
+    .modal-clear{width:100%;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--r);padding:0.8rem;font-size:0.9rem;cursor:pointer;transition:opacity 0.15s}
     .modal-clear:active{opacity:0.6}
 
-    /* ── Schedule panel ── */
+    /* ── Schedule ── */
     .sched-empty{color:var(--muted2);font-size:0.85rem;line-height:1.6}
-    .sched-row{
-      display:grid;grid-template-columns:90px 1fr;
-      padding:0.65rem 0;border-bottom:1px solid var(--border);
-      align-items:start;gap:0.5rem;
-    }
+    .sched-row{display:grid;grid-template-columns:90px 1fr;padding:0.65rem 0;border-bottom:1px solid var(--border);align-items:start;gap:0.5rem}
     .sched-row:last-child{border-bottom:none}
     .sched-time{color:var(--accent);font-size:0.78rem;font-weight:700;font-variant-numeric:tabular-nums;padding-top:1px}
     .sched-block{font-size:0.85rem;font-weight:600}
     .sched-task{font-size:0.72rem;color:var(--muted2);margin-top:2px;line-height:1.4}
-    .now-indicator{
-      background:var(--accent-dim);border-left:2px solid var(--accent);
-      border-radius:0 6px 6px 0;padding-left:0.5rem;
-    }
+    .now-indicator{background:var(--accent-dim);border-left:2px solid var(--accent);border-radius:0 6px 6px 0;padding-left:0.5rem}
 
     /* ── Settings ── */
-    .notion-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:var(--r);padding:1.2rem;
-    }
+    .notion-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem}
     .notion-card-title{font-weight:700;font-size:0.9rem;margin-bottom:0.3rem}
     .notion-card-sub{font-size:0.78rem;color:var(--muted2);line-height:1.5}
-    .btn-notion{
-      display:inline-flex;align-items:center;gap:0.5rem;
-      background:#fff;color:#000;border:none;border-radius:8px;
-      padding:0.6rem 1rem;font-weight:700;font-size:0.82rem;
-      cursor:pointer;margin-top:0.8rem;
-      transition:transform 0.1s;
-    }
+    .btn-notion{display:inline-flex;align-items:center;gap:0.5rem;background:#fff;color:#000;border:none;border-radius:8px;padding:0.6rem 1rem;font-weight:700;font-size:0.82rem;cursor:pointer;margin-top:0.8rem;transition:transform 0.1s}
     .btn-notion:active{transform:scale(0.96)}
     .notion-hint{font-size:0.7rem;color:var(--muted);margin-top:0.6rem;line-height:1.5}
     .notion-hint a{color:var(--accent);text-decoration:none}
     #notion-token-input{display:none;flex-direction:column;gap:0.6rem;margin-top:0.8rem}
-    input[type=password],select{
-      width:100%;background:var(--bg);color:var(--text);
-      border:1px solid var(--border);border-radius:10px;
-      padding:0.7rem 0.9rem;font-size:0.875rem;
-      transition:border-color 0.2s;
-    }
+    input[type=password],select{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:0.7rem 0.9rem;font-size:0.875rem;transition:border-color 0.2s}
     input[type=password]:focus,select:focus{border-color:var(--accent)}
     #notion-connected{display:none;flex-direction:column;gap:0.8rem;margin-top:0.8rem}
-    .connected-badge{
-      display:flex;align-items:center;justify-content:space-between;
-      font-size:0.78rem;
-    }
+    .connected-badge{display:flex;align-items:center;justify-content:space-between;font-size:0.78rem}
     .connected-badge span{color:var(--clean);font-weight:600}
-    .disconnect-btn{
-      background:none;border:none;color:var(--muted);font-size:0.72rem;
-      cursor:pointer;text-decoration:underline;
-    }
+    .disconnect-btn{background:none;border:none;color:var(--muted);font-size:0.72rem;cursor:pointer;text-decoration:underline}
     .page-sel-lbl{font-size:0.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px}
-    .tt-preview{
-      background:var(--bg);border:1px solid var(--border);
-      border-radius:10px;overflow:hidden;
-    }
-    .tt-row{
-      display:grid;grid-template-columns:85px 1fr;
-      padding:0.5rem 0.8rem;border-bottom:1px solid var(--border);
-      font-size:0.78rem;
-    }
+    .tt-preview{background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .tt-row{display:grid;grid-template-columns:85px 1fr;padding:0.5rem 0.8rem;border-bottom:1px solid var(--border);font-size:0.78rem}
     .tt-row:last-child{border-bottom:none}
     .tt-t{color:var(--accent);font-weight:600}
-
-    /* Notif toggles */
-    .notif-row{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:0.7rem 0;border-bottom:1px solid var(--border);
-    }
+    .notif-row{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 0;border-bottom:1px solid var(--border)}
     .notif-row:last-of-type{border-bottom:none}
     .notif-name{font-size:0.88rem;font-weight:600}
     .notif-desc{font-size:0.72rem;color:var(--muted2);margin-top:0.15rem}
     .toggle{position:relative;width:44px;height:26px;flex-shrink:0}
     .toggle input{opacity:0;width:0;height:0}
-    .slider{
-      position:absolute;inset:0;background:var(--border);
-      border-radius:13px;cursor:pointer;transition:background 0.25s;
-    }
-    .slider::before{
-      content:'';position:absolute;width:20px;height:20px;
-      left:3px;top:3px;background:#fff;border-radius:50%;
-      transition:transform 0.25s cubic-bezier(.4,0,.2,1);
-    }
+    .slider{position:absolute;inset:0;background:var(--border);border-radius:13px;cursor:pointer;transition:background 0.25s}
+    .slider::before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform 0.25s cubic-bezier(.4,0,.2,1)}
     .toggle input:checked+.slider{background:var(--accent)}
     .toggle input:checked+.slider::before{transform:translateX(18px)}
 
     /* ── Profile ── */
-    .profile-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:var(--r);padding:1.5rem;text-align:center;margin-bottom:1rem;
-    }
-    .profile-av{
-      width:68px;height:68px;border-radius:50%;
-      background:var(--surface2);margin:0 auto 0.8rem;
-      overflow:hidden;display:flex;align-items:center;justify-content:center;
-      font-size:1.6rem;border:2px solid var(--border);
-    }
+    .profile-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;text-align:center;margin-bottom:1rem}
+    .profile-av{width:68px;height:68px;border-radius:50%;background:var(--surface2);margin:0 auto 0.8rem;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.6rem;border:2px solid var(--border)}
     .profile-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
     .profile-name{font-weight:800;font-size:1.05rem}
     .profile-email{color:var(--muted2);font-size:0.78rem;margin-top:0.2rem}
-    .btn-danger{
-      background:var(--slip-dim);color:var(--slip);
-      border:1px solid rgba(255,107,107,0.15);border-radius:var(--r);
-      padding:0.8rem;width:100%;font-weight:700;font-size:0.88rem;
-      cursor:pointer;margin-top:0.6rem;
-      transition:transform 0.1s;
-    }
+    .profile-habit{margin-top:0.7rem;font-size:0.78rem;color:var(--muted2);background:var(--surface2);border-radius:8px;padding:0.5rem 0.8rem;border:1px solid var(--border)}
+    .profile-habit strong{color:var(--accent)}
+    .btn-danger{background:var(--slip-dim);color:var(--slip);border:1px solid rgba(255,107,107,0.15);border-radius:var(--r);padding:0.8rem;width:100%;font-weight:700;font-size:0.88rem;cursor:pointer;margin-top:0.6rem;transition:transform 0.1s}
     .btn-danger:active{transform:scale(0.97)}
 
-    /* Science card */
-    .science-card{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:var(--r);padding:1rem;margin-bottom:0.8rem;
-    }
+    /* Science */
+    .science-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:0.8rem}
     .science-card h4{font-size:0.78rem;font-weight:700;color:var(--accent);margin-bottom:0.5rem}
     .science-row{display:flex;justify-content:space-between;padding:0.3rem 0;font-size:0.78rem;border-bottom:1px solid var(--border)}
     .science-row:last-child{border-bottom:none}
@@ -426,30 +310,36 @@
     }
     .nav-btn{
       display:flex;flex-direction:column;align-items:center;gap:0.2rem;
-      cursor:pointer;padding:0.4rem;color:var(--muted);
+      cursor:pointer;padding:0.45rem;color:var(--muted);
       font-size:0.62rem;font-weight:600;letter-spacing:0.3px;
       background:none;border:none;
       transition:color 0.2s,transform 0.1s;
     }
-    .nav-btn:active{transform:scale(0.9)}
+    .nav-btn:active{transform:scale(0.88)}
     .nav-btn.active{color:var(--accent)}
-    .nav-icon{font-size:1.25rem;line-height:1}
+    .nav-icon{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center}
 
     /* ── Toast ── */
-    #toast{
-      position:fixed;bottom:84px;left:50%;
-      transform:translateX(-50%) translateY(10px);
-      background:var(--surface2);border:1px solid var(--border);
-      color:var(--text);padding:0.6rem 1.2rem;border-radius:20px;
-      font-size:0.82rem;opacity:0;transition:all 0.25s;
-      pointer-events:none;white-space:nowrap;z-index:100;
-    }
+    #toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:0.65rem 1.3rem;border-radius:22px;font-size:0.82rem;opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;z-index:100}
     #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    /* panel slide animation */
-    .panel{animation:none}
-    .panel.active{animation:fadeIn 0.2s ease}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    /* ── Desktop ── */
+    @media(min-width:900px){
+      body{background:radial-gradient(circle at top left,rgba(184,255,77,0.06),transparent 22%),radial-gradient(circle at bottom right,rgba(184,255,77,0.02),transparent 26%),#030303}
+      #app{display:grid;grid-template-columns:220px minmax(0,1fr);gap:1.2rem;max-width:1300px;padding:2rem 2rem 3rem;margin:0 auto}
+      header{grid-column:1/-1;position:relative;padding:0.8rem 0 1.2rem;border-bottom:1px solid rgba(255,255,255,0.05)}
+      .panel{background:rgba(8,8,8,0.94);box-shadow:var(--shadow);border-radius:var(--r);border:1px solid rgba(255,255,255,0.05)}
+      .panel section{padding:1.4rem 1.6rem 1.6rem}
+      nav{position:sticky;top:1rem;grid-row:2;grid-column:1/2;padding:1.2rem 0.6rem;background:rgba(8,8,8,0.96);border-radius:24px;border:1px solid rgba(255,255,255,0.06);height:calc(100vh - 5rem);display:flex;flex-direction:column;gap:0.3rem;transform:none;left:auto;width:auto;max-width:none}
+      .nav-btn{flex-direction:row;justify-content:flex-start;padding:0.85rem 1rem;width:100%;font-size:0.88rem;border-radius:14px;gap:0.7rem}
+      .nav-btn.active{background:rgba(184,255,77,0.1);color:var(--accent)}
+      .nav-icon{width:18px;height:18px}
+      .cal-grid{gap:5px}
+      .cal-day{border-radius:12px;min-height:52px}
+      .streak-num{font-size:6.5rem}
+      .btn-clean,.btn-slip{font-size:0.95rem;padding:1rem}
+      .checkin-row{gap:1rem}
+    }
   </style>
 </head>
 <body>
@@ -461,7 +351,7 @@
     <p class="auth-tag" style="margin-top:0.5rem">Your streak follows you everywhere.</p>
   </div>
   <div class="auth-science">
-    <strong>Science says:</strong> Habits form in <strong style="color:var(--accent)">59–66 days</strong> on average (UCL, 2024), not 21. Some take up to 335 days. CleanStreak tracks your full 180-day journey.
+    <strong>Science says:</strong> Habits form in <strong style="color:var(--accent)">59–66 days</strong> on average (UCL 2024), not 21. Some take up to 335 days. CleanStreak tracks your full 180-day journey.
   </div>
   <button class="btn btn-primary" onclick="signIn()">Continue with Google</button>
   <button class="btn btn-ghost" onclick="useAnonymous()">Use without signing in</button>
@@ -469,10 +359,10 @@
 
 <!-- Onboarding -->
 <div id="onboard-screen">
-  <div class="onboard-card soft-glow">
+  <div class="onboard-card">
     <div class="onboard-header">
       <div class="auth-logo">clean<span>streak</span></div>
-      <p class="auth-tag">Discipline as a product. Not a habit app.</p>
+      <p class="auth-tag">Discipline as a product.</p>
     </div>
 
     <div class="onboard-step active" id="onboard-step-1">
@@ -480,16 +370,17 @@
       <h2>Break or create?</h2>
       <p>Decide your mindset before the first check-in.</p>
       <div class="onboard-choice-row">
-        <button class="btn btn-primary" onclick="setHabitType('break')">Break</button>
-        <button class="btn btn-clean" onclick="setHabitType('create')">Create</button>
+        <button class="btn btn-primary" onclick="setHabitType('break')">🔥 Break</button>
+        <button class="btn btn-clean" style="border-radius:var(--r);padding:0.9rem;font-weight:700;cursor:pointer" onclick="setHabitType('create')">🌱 Create</button>
       </div>
     </div>
 
     <div class="onboard-step" id="onboard-step-2">
       <div class="step-label">Step 2 of 5</div>
       <h2>I want to</h2>
-      <p>Type a word that will define your streak.</p>
-      <input type="text" id="habit-word" placeholder="stay clean, stop scrolling, build muscle" />
+      <p>Type a word that will define your streak — this replaces "clean" everywhere in the app.</p>
+      <input type="text" id="habit-word" placeholder="stay clean, stop scrolling, build muscle" maxlength="30"/>
+      <div class="onboard-warning" id="word-warning"></div>
       <div class="onboard-action-row">
         <button class="btn btn-primary" onclick="submitHabitWord()">Continue</button>
       </div>
@@ -498,28 +389,27 @@
     <div class="onboard-step" id="onboard-step-3">
       <div class="step-label">Step 3 of 5</div>
       <h2>Are you serious?</h2>
-      <p id="commitment-copy">I will <span id="commitment-word-preview">...</span>. No matter what.</p>
-      <button class="btn btn-primary" onclick="completeCommitment()">Yes</button>
+      <p>I will <strong id="commitment-word-preview" style="color:var(--accent)">...</strong>. No matter what.</p>
+      <button class="btn btn-primary" onclick="completeCommitment()">Yes, I'm serious</button>
     </div>
 
     <div class="onboard-step" id="onboard-step-4">
       <div class="step-label">Step 4 of 5</div>
       <h2>What if you fail?</h2>
-      <p>Explain what you'll do if you can't stay consistent.</p>
+      <p>Explain what you'll tell yourself if you can't stay consistent.</p>
       <textarea id="failure-reason" placeholder="If I lose focus, I will..." rows="4"></textarea>
       <div class="onboard-warning" id="failure-warning"></div>
       <div class="onboard-action-row">
         <button class="btn btn-ghost" id="skip-reason" onclick="skipFailureReason()">Skip</button>
-        <button class="btn btn-primary" onclick="submitFailureReason()">Continue</button>
+        <button class="btn btn-primary" onclick="submitFailureReason()">That's my reason</button>
       </div>
     </div>
 
     <div class="onboard-step" id="onboard-step-5">
       <div class="step-label">Step 5 of 5</div>
-      <h2>Ready to start?</h2>
-      <p>Your word will replace Clean/Streak prompts across the app.</p>
-      <p class="onboard-success" id="onboard-success-copy">You are going to achieve whatever you planned for. Enter the home page when you're ready.</p>
-      <button class="btn btn-primary" onclick="finishOnboarding()">Enter the dashboard</button>
+      <h2>No more excuses.</h2>
+      <p class="onboard-success" id="onboard-success-copy">Your reasons don't matter. Only your actions do. CleanStreak will hold you accountable.</p>
+      <button class="btn btn-primary" onclick="finishOnboarding()">Enter CleanStreak →</button>
     </div>
   </div>
 </div>
@@ -527,10 +417,8 @@
 <!-- App -->
 <div id="app">
   <header>
-    <div class="h-logo">clean<span>streak</span><span class="h-ver">v4.1</span></div>
-    <div class="avatar" id="avatar-btn" onclick="showPanel('profile')">
-      <span id="avatar-letter">M</span>
-    </div>
+    <div class="h-logo">clean<span>streak</span><span class="h-ver">v4.2</span></div>
+    <div class="avatar" id="avatar-btn" onclick="showPanel('profile')"><span id="avatar-letter">M</span></div>
   </header>
 
   <!-- Home -->
@@ -539,13 +427,11 @@
       <div class="streak-card">
         <div class="streak-num" id="streak-count">0</div>
         <div class="streak-lbl">day streak</div>
+        <div class="streak-word-tag" id="streak-word-tag">staying consistent</div>
         <div class="streak-msg" id="streak-msg">Check in tonight to start your streak</div>
       </div>
       <div class="progress-wrap">
-        <div class="progress-top">
-          <span id="goal-label">66-day goal</span>
-          <span id="progress-text">0 / 66</span>
-        </div>
+        <div class="progress-top"><span id="goal-label">66-day goal</span><span id="progress-text">0 / 66</span></div>
         <div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div>
         <div class="milestones">
           <div class="ms" data-day="21"><div class="ms-dot"></div>21d</div>
@@ -555,12 +441,11 @@
           <div class="ms" data-day="180"><div class="ms-dot"></div>180d</div>
         </div>
       </div>
-      <div class="checkin-row" id="checkin-row">
+      <div class="checkin-row">
         <button class="btn-clean" id="checkin-clean" onclick="checkIn('clean')">✓ Stayed clean</button>
         <button class="btn-slip" id="checkin-slip" onclick="checkIn('slip')">↺ I slipped</button>
       </div>
     </section>
-
     <section>
       <div class="stats-row">
         <div class="stat"><div class="stat-val" id="stat-best">0</div><div class="stat-lbl">Best streak</div></div>
@@ -568,7 +453,6 @@
         <div class="stat"><div class="stat-val" id="stat-rate">0%</div><div class="stat-lbl">Success rate</div></div>
       </div>
     </section>
-
     <section>
       <div class="sec-title">180-day calendar — tap any day to edit</div>
       <div class="cal-header">
@@ -576,18 +460,17 @@
         <div class="cal-dh">W</div><div class="cal-dh">T</div><div class="cal-dh">F</div><div class="cal-dh">S</div>
       </div>
       <div class="cal-grid" id="cal-grid"></div>
-      <div class="cal-legend" style="margin-top:0.8rem">
+      <div class="cal-legend">
         <div class="legend-item"><div class="legend-dot" style="background:var(--clean)"></div>Clean</div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--slip)"></div>Slipped</div>
         <div class="legend-item"><span style="font-size:0.7rem;color:var(--accent)">★</span>&nbsp;Milestone</div>
       </div>
     </section>
-
     <section>
       <div class="sec-title">Habit science</div>
       <div class="science-card">
         <h4>How long does it actually take?</h4>
-        <div class="science-row"><span>First automaticity</span><span>~21 days (myth origin)</span></div>
+        <div class="science-row"><span>First automaticity</span><span>~21 days (myth)</span></div>
         <div class="science-row"><span>Median formation</span><span>59–66 days (UCL 2024)</span></div>
         <div class="science-row"><span>Stable habit</span><span>90 days</span></div>
         <div class="science-row"><span>Deep rewiring</span><span>Up to 335 days</span></div>
@@ -600,9 +483,7 @@
   <div class="panel" id="panel-schedule">
     <section>
       <div class="sec-title">Today's Schedule</div>
-      <div id="schedule-content">
-        <p class="sched-empty">Connect Notion in Settings to see your schedule here.</p>
-      </div>
+      <div id="schedule-content"><p class="sched-empty">Connect Notion in Settings to see your schedule here.</p></div>
     </section>
   </div>
 
@@ -613,7 +494,6 @@
       <div class="notion-card">
         <div class="notion-card-title">Connect your Notion</div>
         <div class="notion-card-sub">Select any page with a timetable — app auto-detects and schedules notifications.</div>
-
         <div id="notion-disconnected">
           <button class="btn-notion" onclick="connectNotion()">
             <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" rx="2.5" fill="#000"/><path d="M3 3h5l2.5 2.5V11H3V3z" fill="#fff"/></svg>
@@ -621,52 +501,30 @@
           </button>
           <p class="notion-hint">Need an integration token. <a href="https://www.notion.so/my-integrations" target="_blank">Get one here →</a></p>
         </div>
-
         <div id="notion-token-input">
           <input type="password" id="token-field" placeholder="ntn_xxxxxxx or secret_xxxxxxx"/>
           <button class="btn btn-primary" onclick="saveNotionToken()" style="font-size:0.85rem;padding:0.75rem">Save Token</button>
           <button class="btn btn-ghost" onclick="cancelNotion()" style="font-size:0.8rem;padding:0.65rem">Cancel</button>
         </div>
-
         <div id="notion-connected">
-          <div class="connected-badge">
-            <span>✓ Connected</span>
-            <button class="disconnect-btn" onclick="disconnectNotion()">Disconnect</button>
-          </div>
+          <div class="connected-badge"><span>✓ Connected</span><button class="disconnect-btn" onclick="disconnectNotion()">Disconnect</button></div>
           <div class="page-sel-lbl">Select page</div>
-          <select id="page-select" onchange="onPageSelect(this.value)">
-            <option value="">Loading pages...</option>
-          </select>
+          <select id="page-select" onchange="onPageSelect(this.value)"><option value="">Loading pages...</option></select>
           <div id="tt-preview" class="tt-preview" style="display:none"></div>
         </div>
       </div>
     </section>
-
     <section>
       <div class="sec-title">Notifications</div>
       <div class="notif-row">
-        <div>
-          <div class="notif-name">Schedule reminders</div>
-          <div class="notif-desc">Notify at start of each Notion block</div>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="tog-schedule" onchange="savePref('schedule',this.checked)"/>
-          <span class="slider"></span>
-        </label>
+        <div><div class="notif-name">Schedule reminders</div><div class="notif-desc">Notify at start of each Notion block</div></div>
+        <label class="toggle"><input type="checkbox" id="tog-schedule" onchange="savePref('schedule',this.checked)"/><span class="slider"></span></label>
       </div>
       <div class="notif-row">
-        <div>
-          <div class="notif-name">Streak warning</div>
-          <div class="notif-desc">9 PM reminder if not checked in</div>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="tog-streak" onchange="savePref('streak',this.checked)" checked/>
-          <span class="slider"></span>
-        </label>
+        <div><div class="notif-name">Streak warning</div><div class="notif-desc">9 PM reminder if not checked in</div></div>
+        <label class="toggle"><input type="checkbox" id="tog-streak" onchange="savePref('streak',this.checked)" checked/><span class="slider"></span></label>
       </div>
-      <button class="btn btn-primary" style="margin-top:1rem;font-size:0.85rem;padding:0.75rem" onclick="enablePush()">
-        Enable Push Notifications
-      </button>
+      <button class="btn btn-primary" style="margin-top:1rem;font-size:0.85rem;padding:0.75rem" onclick="enablePush()">Enable Push Notifications</button>
       <div id="push-status" style="font-size:0.72rem;color:var(--muted2);margin-top:0.5rem"></div>
     </section>
   </div>
@@ -678,6 +536,7 @@
         <div class="profile-av" id="profile-av">👤</div>
         <div class="profile-name" id="profile-name">—</div>
         <div class="profile-email" id="profile-email">—</div>
+        <div class="profile-habit">Your commitment: <strong id="profile-habit-word">—</strong></div>
       </div>
       <div class="sec-title">Danger zone</div>
       <button class="btn-danger" onclick="resetData()">Reset all streak data</button>
@@ -687,16 +546,16 @@
 
   <nav>
     <button class="nav-btn active" id="nav-home" onclick="showPanel('home')">
-      <span class="nav-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C10.34 2 8.82 2.68 7.78 3.78C6.74 4.88 6.16 6.38 6.16 7.96C6.16 12.87 12 22 12 22C12 22 17.84 12.87 17.84 7.96C17.84 6.38 17.26 4.88 16.22 3.78C15.18 2.68 13.66 2 12 2Z"/><path d="M12 11.5C13.38 11.5 14.5 10.38 14.5 9C14.5 7.62 13.38 6.5 12 6.5C10.62 6.5 9.5 7.62 9.5 9C9.5 10.38 10.62 11.5 12 11.5Z"/></svg></span>Streak
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Streak
     </button>
     <button class="nav-btn" id="nav-schedule" onclick="showPanel('schedule')">
-      <span class="nav-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Schedule
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Schedule
     </button>
     <button class="nav-btn" id="nav-settings" onclick="showPanel('settings')">
-      <span class="nav-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15A1.65 1.65 0 0 0 20 13.34V10.66A1.65 1.65 0 0 0 19.4 9L17.06 8.27A1.65 1.65 0 0 0 16.22 6.53L16.88 4.25A1.65 1.65 0 0 0 15 3.15L12.89 4.47A1.65 1.65 0 0 0 11.11 4.47L9 3.15A1.65 1.65 0 0 0 7.12 4.25L7.78 6.53A1.65 1.65 0 0 0 6.94 8.27L4.6 9A1.65 1.65 0 0 0 4 10.66V13.34A1.65 1.65 0 0 0 4.6 15L6.94 15.73A1.65 1.65 0 0 0 7.78 17.47L7.12 19.75A1.65 1.65 0 0 0 9 20.85L11.11 19.53A1.65 1.65 0 0 0 12.89 19.53L15 20.85A1.65 1.65 0 0 0 16.88 19.75L16.22 17.47A1.65 1.65 0 0 0 17.06 15.73L19.4 15Z"/></svg></span>Settings
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>Settings
     </button>
     <button class="nav-btn" id="nav-profile" onclick="showPanel('profile')">
-      <span class="nav-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21V19A4 4 0 0 0 16 15H8A4 4 0 0 0 4 19V21"/><circle cx="12" cy="7" r="4"/></svg></span>Profile
+      <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Profile
     </button>
   </nav>
 </div>
@@ -712,101 +571,146 @@
     <button class="modal-clear" onclick="modalCheckIn(null)">Clear this day</button>
   </div>
 </div>
-
 <div id="toast"></div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
-
 <script>
-const FB_CONFIG = {
-  apiKey: "AIzaSyDOHydBHLiz5FIEzwlaWXLkEwHva_f51vI",
-  authDomain: "cleanstreak-107b4.firebaseapp.com",
-  projectId: "cleanstreak-107b4",
-  storageBucket: "cleanstreak-107b4.firebasestorage.app",
-  messagingSenderId: "126724532219",
-  appId: "1:126724532219:web:3a5f98af4f3778f82e8d5e"
-};
-const VAPID_KEY = "BDDpPoN83x2LVuDYH_68D7qao77nQb9zNBe92yJ2ZgHIVV2T-NAlmEQRnmS1WsIRbU9UjlcTnB9-9v92Nm1eJqM";
-const NOTION_PROXY = "https://cs-notion.mohithpupppala.workers.dev";
-const MILESTONES = new Set([21,60,66,90,180]);
+const FB_CONFIG={apiKey:"AIzaSyDOHydBHLiz5FIEzwlaWXLkEwHva_f51vI",authDomain:"cleanstreak-107b4.firebaseapp.com",projectId:"cleanstreak-107b4",storageBucket:"cleanstreak-107b4.firebasestorage.app",messagingSenderId:"126724532219",appId:"1:126724532219:web:3a5f98af4f3778f82e8d5e"};
+const VAPID_KEY="BDDpPoN83x2LVuDYH_68D7qao77nQb9zNBe92yJ2ZgHIVV2T-NAlmEQRnmS1WsIRbU9UjlcTnB9-9v92Nm1eJqM";
+const NOTION_PROXY="https://cs-notion.mohithpupppala.workers.dev";
+const MILESTONES=new Set([21,60,66,90,180]);
 
 firebase.initializeApp(FB_CONFIG);
-const auth = firebase.auth();
-const db   = firebase.firestore();
-let messaging;
-try{ messaging = firebase.messaging(); }catch(e){}
+const auth=firebase.auth();const db=firebase.firestore();
+let messaging;try{messaging=firebase.messaging();}catch(e){}
+let currentUser=null,streakData={},notionToken=localStorage.getItem('notionToken')||null;
+let selPageId=localStorage.getItem('notionPageId')||null,modalKey=null,swRegistration=null;
+let failureAttempts=0;
 
-let currentUser = null;
-let streakData  = {};
-let notionToken = localStorage.getItem('notionToken') || null;
-let selPageId   = localStorage.getItem('notionPageId') || null;
-let modalKey    = null;
-// Store the active Service Worker registration
-let swRegistration = null;
 // ── Auth ──
-auth.onAuthStateChanged(u => {
-  currentUser = u;
-  if(u){ showApp(u); loadStreak(); if(notionToken) showConnected(); }
-  else { document.getElementById('auth-screen').style.display='flex'; document.getElementById('app').style.display='none'; }
+auth.onAuthStateChanged(u=>{
+  currentUser=u;
+  if(u){showApp(u);loadStreak();if(notionToken)showConnected();}
+  else{document.getElementById('auth-screen').style.display='flex';document.getElementById('app').style.display='none';}
 });
-
-async function signIn(){
-  try{ await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-  catch(e){ toast('Sign in failed'); }
-}
-function useAnonymous(){ showApp(null); loadStreakLocal(); }
-
+async function signIn(){try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());}catch(e){toast('Sign in failed');}}
+function useAnonymous(){showApp(null);loadStreakLocal();}
 function showApp(u){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='block';
   if(u){
-    document.getElementById('avatar-letter').textContent = (u.displayName||'M')[0].toUpperCase();
-    document.getElementById('profile-name').textContent  = u.displayName||'Anonymous';
-    document.getElementById('profile-email').textContent = u.email||'';
-    if(u.photoURL){
-      document.getElementById('avatar-btn').innerHTML=`<img src="${u.photoURL}"/>`;
-      document.getElementById('profile-av').innerHTML=`<img src="${u.photoURL}"/>`;
-    }
+    document.getElementById('avatar-letter').textContent=(u.displayName||'M')[0].toUpperCase();
+    document.getElementById('profile-name').textContent=u.displayName||'Anonymous';
+    document.getElementById('profile-email').textContent=u.email||'';
+    if(u.photoURL){document.getElementById('avatar-btn').innerHTML=`<img src="${u.photoURL}"/>`;document.getElementById('profile-av').innerHTML=`<img src="${u.photoURL}"/>`;}
   }
   registerSW();
   applyHabitLabels();
   maybeStartOnboarding();
 }
-async function signOut(){ await auth.signOut(); localStorage.clear(); }
+async function signOut(){await auth.signOut();localStorage.clear();}
+
+// ── Onboarding ──
+function maybeStartOnboarding(){
+  const key=currentUser?'onboardComplete_'+currentUser.uid:'onboardComplete_anon';
+  if(!localStorage.getItem(key)) document.getElementById('onboard-screen').classList.add('open');
+}
+function setHabitType(t){localStorage.setItem('habitType',t);showOnboardStep(2);}
+function skipHabitWord(){
+  const w=document.getElementById('word-warning');
+  w.textContent="I'm just trolling you 😏";
+  w.style.color='var(--accent)';
+  document.getElementById('skip-word').remove();
+  setTimeout(()=>{w.textContent='';w.style.color='#ff8f8f';},2000);
+}
+function submitHabitWord(){
+  const v=document.getElementById('habit-word').value.trim();
+  if(!v){document.getElementById('word-warning').textContent='Type a word before continuing.';return;}
+  localStorage.setItem('habitWord',v);
+  document.getElementById('commitment-word-preview').textContent=v;
+  document.getElementById('word-warning').textContent='';
+  showOnboardStep(3);
+}
+function completeCommitment(){showOnboardStep(4);}
+function submitFailureReason(){
+  const r=document.getElementById('failure-reason').value.trim();
+  const w=document.getElementById('failure-warning');
+  if(!r){w.textContent='Write something first.';return;}
+  failureAttempts++;
+  if(failureAttempts<4){
+    w.textContent=['That reason feels weak. Try again.','Still not enough. Be honest with yourself.','Last chance. Give it real purpose.'][failureAttempts-1];
+    return;
+  }
+  // Thanos snap
+  const ta=document.getElementById('failure-reason');
+  const sr=document.getElementById('skip-reason');
+  ta.classList.add('thanos-snap');
+  if(sr) sr.classList.add('thanos-snap');
+  w.textContent="There's no reason good enough to give up. This app will help you.";
+  w.style.color='var(--accent)';
+  setTimeout(()=>{
+    ta.style.display='none';
+    if(sr) sr.style.display='none';
+    document.getElementById('onboard-success-copy').textContent='Your excuses just disappeared. So did your reasons to quit. Own it.';
+    showOnboardStep(5);
+  },2500);
+}
+function skipFailureReason(){
+  const btn=document.getElementById('skip-reason');
+  const w=document.getElementById('failure-warning');
+  w.textContent="I'm just trolling you 😏";
+  w.style.color='var(--accent)';
+  btn.style.transition='opacity 0.4s,transform 0.4s';
+  btn.style.opacity='0';btn.style.transform='scale(0)';
+  setTimeout(()=>{btn.remove();w.textContent='';w.style.color='#ff8f8f';},1800);
+}
+function finishOnboarding(){
+  const key=currentUser?'onboardComplete_'+currentUser.uid:'onboardComplete_anon';
+  localStorage.setItem(key,'1');
+  document.getElementById('onboard-screen').classList.remove('open');
+  applyHabitLabels();
+  if(currentUser) db.collection('users').doc(currentUser.uid).set({habitWord:localStorage.getItem('habitWord')||'clean',habitType:localStorage.getItem('habitType')||'break'},{merge:true});
+  launchConfetti();
+  toast('Welcome to CleanStreak. Start strong.');
+}
+function showOnboardStep(n){
+  document.querySelectorAll('.onboard-step').forEach((el,i)=>el.classList.toggle('active',i===n-1));
+}
+function applyHabitLabels(){
+  const w=localStorage.getItem('habitWord')||'clean';
+  const t=localStorage.getItem('habitType')||'break';
+  const slip=t==='break'?`↺ I ${w}ed`:'↺ I slipped';
+  const clean=`✓ Stayed ${w}`;
+  ['checkin-clean','modal-clean'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=clean;});
+  ['checkin-slip','modal-slip'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=slip;});
+  const tag=document.getElementById('streak-word-tag');if(tag)tag.textContent=w;
+  const ph=document.getElementById('profile-habit-word');if(ph)ph.textContent=w;
+}
 
 // ── Streak ──
 async function loadStreak(){
   if(!currentUser) return loadStreakLocal();
-  const snap = await db.collection('streaks').doc(currentUser.uid).collection('days').get();
-  streakData={};
-  snap.forEach(d=>{ streakData[d.id]=d.data().status; });
+  const snap=await db.collection('streaks').doc(currentUser.uid).collection('days').get();
+  streakData={};snap.forEach(d=>{streakData[d.id]=d.data().status;});
   updateUI();
 }
-function loadStreakLocal(){
-  streakData=JSON.parse(localStorage.getItem('streakData')||'{}');
-  updateUI();
-}
+function loadStreakLocal(){streakData=JSON.parse(localStorage.getItem('streakData')||'{}');updateUI();}
 
 async function checkIn(status){
   const k=todayKey();
-  streakData[k]=status;
-  persist(k,status);
-  updateUI();
-  toast(status==='clean'?'✓ Clean day logged':'Logged. Never miss twice.');
+  const isFirst=Object.values(streakData).filter(v=>v==='clean').length===0;
+  streakData[k]=status;persist(k,status);updateUI();
+  if(isFirst&&status==='clean') launchConfetti();
+  toast(status==='clean'?'✓ Day logged. Keep going.':'Logged. Never miss twice.');
 }
-
 async function persist(k,status){
   if(currentUser){
-    const ref = db.collection('streaks').doc(currentUser.uid).collection('days').doc(k);
-    status===null ? await ref.delete() : await ref.set({status,ts:Date.now()});
-    await db.collection('users').doc(currentUser.uid).set({
-      fcmToken:localStorage.getItem('fcmToken')||null,
-      notionToken,notionConnected:!!notionToken,selectedPageId:selPageId
-    },{merge:true});
+    const ref=db.collection('streaks').doc(currentUser.uid).collection('days').doc(k);
+    status===null?await ref.delete():await ref.set({status,ts:Date.now()});
+    await db.collection('users').doc(currentUser.uid).set({fcmToken:localStorage.getItem('fcmToken')||null,notionToken,notionConnected:!!notionToken,selectedPageId:selPageId},{merge:true});
   } else {
     if(status===null) delete streakData[k];
     localStorage.setItem('streakData',JSON.stringify(streakData));
@@ -815,91 +719,84 @@ async function persist(k,status){
 
 // ── UI ──
 function updateUI(){
-  const streak  = calcStreak();
-  const clean   = Object.values(streakData).filter(v=>v==='clean').length;
-  const total   = Object.keys(streakData).length;
-  const rate    = total>0?Math.round(clean/total*100):0;
-  const best    = calcBest();
-  const goal    = clean>=90?180:clean>=66?90:66;
+  const streak=calcStreak();
+  const clean=Object.values(streakData).filter(v=>v==='clean').length;
+  const total=Object.keys(streakData).length;
+  const rate=total>0?Math.round(clean/total*100):0;
+  const best=calcBest();
+  const goal=clean>=90?180:clean>=66?90:66;
 
-  document.getElementById('streak-count').textContent = streak;
-  document.getElementById('stat-best').textContent    = best;
-  document.getElementById('stat-clean').textContent   = clean;
-  document.getElementById('stat-rate').textContent    = rate+'%';
-  document.getElementById('goal-label').textContent   = goal+'-day goal';
-  document.getElementById('progress-text').textContent= clean+' / '+goal;
-  document.getElementById('pfill').style.width        = Math.min(clean/goal*100,100)+'%';
+  document.getElementById('streak-count').textContent=streak;
+  document.getElementById('stat-best').textContent=best;
+  document.getElementById('stat-clean').textContent=clean;
+  document.getElementById('stat-rate').textContent=rate+'%';
+  document.getElementById('goal-label').textContent=goal+'-day goal';
+  document.getElementById('progress-text').textContent=clean+' / '+goal;
+  document.getElementById('pfill').style.width=Math.min(clean/goal*100,100)+'%';
+  document.querySelectorAll('.ms').forEach(m=>m.classList.toggle('hit',clean>=parseInt(m.dataset.day)));
 
-  document.querySelectorAll('.ms').forEach(m=>{
-    m.classList.toggle('hit', clean>=parseInt(m.dataset.day));
-  });
+  // ── Dynamic background darkening ──
+  const darkness=Math.min(clean/180,1);
+  const bgL=Math.round(3-darkness*2); // 3% → 1% lightness
+  document.body.style.background=`hsl(0,0%,${bgL}%)`;
+  document.querySelector('header').style.background=`hsl(0,0%,${bgL}%)`;
+
+  // ── Accent color shift at milestones ──
+  if(clean>=90) document.documentElement.style.setProperty('--accent','#f0c830'); // gold
+  else if(clean>=66) document.documentElement.style.setProperty('--accent','#d4ff4f'); // bright lime
+  else if(clean>=21) document.documentElement.style.setProperty('--accent','#b8ff4d'); // default lime
+  else document.documentElement.style.setProperty('--accent','#a0e832'); // slightly dim
 
   const today=streakData[todayKey()];
   const msg=document.getElementById('streak-msg');
-  if(today) msg.textContent=today==='clean'?'✓ Checked in today. Keep going.':'You slipped. Never miss twice.';
-  else msg.textContent=streak>0?'⚡ Keep the streak alive — check in tonight':'Check in tonight to start your streak';
+  if(today) msg.textContent=today==='clean'?`✓ You did it today. ${streak} days strong.`:'You slipped. Never miss twice.';
+  else msg.textContent=streak>0?`⚡ ${streak} days. Don't stop now.`:'Check in tonight to start your streak';
 
+  applyHabitLabels();
   renderCalendar();
 }
-
 function calcStreak(){
-  let c=0; const d=new Date();
+  let c=0;const d=new Date();
   if(!streakData[todayKey()]) d.setDate(d.getDate()-1);
-  while(streakData[dateKey(d)]==='clean'){ c++; d.setDate(d.getDate()-1); }
+  while(streakData[dateKey(d)]==='clean'){c++;d.setDate(d.getDate()-1);}
   return c;
 }
 function calcBest(){
   let b=0,c=0;
-  Object.keys(streakData).sort().forEach(k=>{ streakData[k]==='clean'?(c++,b=Math.max(b,c)):c=0; });
+  Object.keys(streakData).sort().forEach(k=>{streakData[k]==='clean'?(c++,b=Math.max(b,c)):c=0;});
   return b;
 }
-
 function renderCalendar(){
-  const grid=document.getElementById('cal-grid');
-  grid.innerHTML='';
-  const today=new Date(); today.setHours(0,0,0,0);
-  // start from 180 days ago, padded to Sunday
-  const start=new Date(today); start.setDate(start.getDate()-179);
-  // pad to previous Sunday
-  const pad=start.getDay();
-  start.setDate(start.getDate()-pad);
-
-  const end=new Date(today);
+  const grid=document.getElementById('cal-grid');grid.innerHTML='';
+  const today=new Date();today.setHours(0,0,0,0);
+  const rangeStart=new Date(today);rangeStart.setDate(rangeStart.getDate()-179);
+  const start=new Date(rangeStart);start.setDate(start.getDate()-start.getDay());
   const d=new Date(start);
-  while(d<=end){
+  while(d<=today){
     const k=dateKey(d);
-    const isFuture=d>today;
-    const isToday=dateKey(d)===todayKey();
-    const dayNum=Math.round((d-new Date(today.getFullYear(),today.getMonth(),today.getDate()-179))/86400000)+1;
-    const isMilestone=MILESTONES.has(dayNum<0?0:dayNum);
+    const isToday=k===todayKey();
+    const dayNum=Math.round((d-rangeStart)/86400000)+1;
+    const isMilestone=MILESTONES.has(dayNum);
     const status=streakData[k];
-    const inRange = d>=new Date(today.getFullYear(),today.getMonth(),today.getDate()-179);
-
+    const inRange=d>=rangeStart;
     const el=document.createElement('div');
     el.className='cal-day'+(status==='clean'?' clean':status==='slip'?' slip':'')+
-      (isToday?' today':isFuture?' future':'')+(isMilestone&&inRange?' milestone':'');
-    if(!inRange) el.style.opacity='0.08';
+      (isToday?' today':'')+(isMilestone&&inRange?' milestone':'');
+    if(!inRange) el.style.opacity='0.06';
     el.textContent=d.getDate();
-    if(!isFuture && inRange){
-      const key=k;
-      el.onclick=()=>openModal(key,d);
-    }
+    if(inRange){const key=k,dd=new Date(d);el.onclick=()=>openModal(key,dd);}
     grid.appendChild(el);
     d.setDate(d.getDate()+1);
   }
 }
 
 // ── Modal ──
-function openModal(key, date){
+function openModal(key,date){
   modalKey=key;
   document.getElementById('modal-date').textContent=date.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
   document.getElementById('day-modal').classList.add('open');
 }
-function closeModal(e){
-  if(e.target===document.getElementById('day-modal')){
-    document.getElementById('day-modal').classList.remove('open');
-  }
-}
+function closeModal(e){if(e.target===document.getElementById('day-modal')) document.getElementById('day-modal').classList.remove('open');}
 function modalCheckIn(status){
   if(!modalKey) return;
   if(status===null) delete streakData[modalKey]; else streakData[modalKey]=status;
@@ -914,23 +811,16 @@ function showPanel(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
   document.getElementById('panel-'+name).classList.add('active');
-  const nb=document.getElementById('nav-'+name);
-  if(nb) nb.classList.add('active');
+  const nb=document.getElementById('nav-'+name);if(nb) nb.classList.add('active');
 }
 
 // ── Notion ──
-function connectNotion(){
-  document.getElementById('notion-disconnected').style.display='none';
-  document.getElementById('notion-token-input').style.display='flex';
-}
-function cancelNotion(){
-  document.getElementById('notion-disconnected').style.display='block';
-  document.getElementById('notion-token-input').style.display='none';
-}
+function connectNotion(){document.getElementById('notion-disconnected').style.display='none';document.getElementById('notion-token-input').style.display='flex';}
+function cancelNotion(){document.getElementById('notion-disconnected').style.display='block';document.getElementById('notion-token-input').style.display='none';}
 async function saveNotionToken(){
   const t=document.getElementById('token-field').value.trim();
-  if(!t.startsWith('secret_')&&!t.startsWith('ntn_')){ toast('Invalid token'); return; }
-  notionToken=t; localStorage.setItem('notionToken',t);
+  if(!t.startsWith('secret_')&&!t.startsWith('ntn_')){toast('Invalid token');return;}
+  notionToken=t;localStorage.setItem('notionToken',t);
   document.getElementById('notion-token-input').style.display='none';
   await showConnected();
   if(currentUser) await db.collection('users').doc(currentUser.uid).set({notionToken:t,notionConnected:true},{merge:true});
@@ -942,41 +832,38 @@ async function showConnected(){
   await loadPages();
 }
 async function loadPages(){
-  const sel=document.getElementById('page-select');
-  sel.innerHTML='<option>Loading...</option>';
+  const sel=document.getElementById('page-select');sel.innerHTML='<option>Loading...</option>';
   try{
     const res=await fetch(`${NOTION_PROXY}/pages`,{headers:{'x-notion-token':notionToken}});
     const data=await res.json();
     const pages=data.results.filter(p=>p.object==='page').map(p=>({id:p.id,title:getTitle(p)}));
-    sel.innerHTML='<option value="">— Select a page —</option>'+
-      pages.map(p=>`<option value="${p.id}"${p.id===selPageId?' selected':''}>${p.title}</option>`).join('');
+    sel.innerHTML='<option value="">— Select a page —</option>'+pages.map(p=>`<option value="${p.id}"${p.id===selPageId?' selected':''}>${p.title}</option>`).join('');
     if(selPageId) loadTTPreview(selPageId);
-  }catch(e){ sel.innerHTML='<option>Error — check worker</option>'; }
+  }catch(e){sel.innerHTML='<option>Error</option>';}
 }
 async function onPageSelect(id){
   if(!id) return;
-  selPageId=id; localStorage.setItem('notionPageId',id);
+  selPageId=id;localStorage.setItem('notionPageId',id);
   if(currentUser) await db.collection('users').doc(currentUser.uid).set({selectedPageId:id},{merge:true});
   loadTTPreview(id);
 }
 async function loadTTPreview(id){
   const prev=document.getElementById('tt-preview');
-  prev.style.display='block'; prev.innerHTML='<div class="tt-row"><span style="color:var(--muted)">Loading...</span></div>';
+  prev.style.display='block';prev.innerHTML='<div class="tt-row"><span style="color:var(--muted)">Loading...</span></div>';
   try{
     const res=await fetch(`${NOTION_PROXY}/blocks/${id}/children`,{headers:{'x-notion-token':notionToken}});
     const data=await res.json();
     const tables=data.results.filter(b=>b.type==='table');
     for(const t of tables){
-      const rows=await (await fetch(`${NOTION_PROXY}/blocks/${t.id}/children`,{headers:{'x-notion-token':notionToken}})).json();
+      const rows=await(await fetch(`${NOTION_PROXY}/blocks/${t.id}/children`,{headers:{'x-notion-token':notionToken}})).json();
       const parsed=parseTT(rows.results||[]);
       if(parsed.length){
         prev.innerHTML=parsed.map(e=>`<div class="tt-row"><span class="tt-t">${e.start}</span><span>${e.block}</span></div>`).join('');
-        renderSchedule(parsed);
-        return;
+        renderSchedule(parsed);return;
       }
     }
-    prev.innerHTML='<div class="tt-row"><span style="color:var(--muted)">No Start/End timetable found</span></div>';
-  }catch(e){ prev.innerHTML='<div class="tt-row"><span style="color:var(--slip)">Error</span></div>'; }
+    prev.innerHTML='<div class="tt-row"><span style="color:var(--muted)">No timetable found</span></div>';
+  }catch(e){prev.innerHTML='<div class="tt-row"><span style="color:var(--slip)">Error</span></div>';}
 }
 function parseTT(rows){
   if(rows.length<2) return [];
@@ -985,25 +872,18 @@ function parseTT(rows){
   if(si===-1||ei===-1) return [];
   return rows.slice(1).map(r=>{const c=getCells(r);return{start:c[si]||'',end:c[ei]||'',block:c[bi]||'',task:c[ti]||''};}).filter(r=>r.start);
 }
-function getCells(row){ return (row.table_row?.cells||[]).map(c=>c.map(t=>t.plain_text).join('')); }
-function getTitle(p){
-  for(const k of Object.keys(p.properties||{})){const t=p.properties[k]?.title?.[0]?.plain_text;if(t)return t;}
-  return p.id.slice(0,8);
-}
+function getCells(row){return(row.table_row?.cells||[]).map(c=>c.map(t=>t.plain_text).join(''));}
+function getTitle(p){for(const k of Object.keys(p.properties||{})){const t=p.properties[k]?.title?.[0]?.plain_text;if(t)return t;}return p.id.slice(0,8);}
 function renderSchedule(entries){
-  const now=new Date(); const cur=now.getHours()*60+now.getMinutes();
+  const now=new Date();const cur=now.getHours()*60+now.getMinutes();
   document.getElementById('schedule-content').innerHTML=entries.map(e=>{
     const sm=timeToMin(e.start),em=timeToMin(e.end);
     const isNow=sm!==null&&em!==null&&cur>=sm&&cur<em;
-    return `<div class="sched-row${isNow?' now-indicator':''}">
-      <span class="sched-time">${e.start}</span>
-      <div><div class="sched-block">${e.block}</div><div class="sched-task">${e.task}</div></div>
-    </div>`;
+    return `<div class="sched-row${isNow?' now-indicator':''}"><span class="sched-time">${e.start}</span><div><div class="sched-block">${e.block}</div><div class="sched-task">${e.task}</div></div></div>`;
   }).join('');
 }
 function timeToMin(s){
-  const m=s.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if(!m)return null;
+  const m=s.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);if(!m)return null;
   let h=parseInt(m[1]);const min=parseInt(m[2]);
   if(m[3].toUpperCase()==='PM'&&h!==12)h+=12;
   if(m[3].toUpperCase()==='AM'&&h===12)h=0;
@@ -1023,184 +903,66 @@ async function enablePush(){
   const st=document.getElementById('push-status');
   try{
     if(Notification.permission!=='granted'){
-      const perm=await Notification.requestPermission();
-      if(perm!=='granted'){toast('Permission denied');return;}
+      const p=await Notification.requestPermission();
+      if(p!=='granted'){toast('Permission denied');return;}
     }
-    const reg = await registerSW();
+    const reg=await registerSW();
     if(!reg){toast('Push registration failed');return;}
-    const token = await messaging.getToken({
-      vapidKey:VAPID_KEY,
-      serviceWorkerRegistration:reg
-    });
+    await new Promise(r=>setTimeout(r,1000));
+    const token=await messaging.getToken({vapidKey:VAPID_KEY,serviceWorkerRegistration:reg});
     localStorage.setItem('fcmToken',token);
     if(currentUser) await db.collection('users').doc(currentUser.uid).set({fcmToken:token},{merge:true});
-    st.textContent='✓ Push enabled'; st.style.color='var(--clean)';
+    st.textContent='✓ Push enabled';st.style.color='var(--clean)';
     toast('Push notifications enabled!');
-  }catch(e){
-    st.textContent='Failed: '+(e.message||e);
-  }
+  }catch(e){st.textContent='Failed: '+e.message;}
 }
-function savePref(k,v){
-  if(currentUser) db.collection('users').doc(currentUser.uid).set({['notif_'+k]:v},{merge:true});
-}
+function savePref(k,v){if(currentUser) db.collection('users').doc(currentUser.uid).set({['notif_'+k]:v},{merge:true});}
 
-// ── SW ──
-async function registerSW() {
-
-  if (!('serviceWorker' in navigator)) {
-    console.log("Service Workers not supported.");
-    return null;
-  }
-
-  try {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    for (const reg of regs) {
-      if (reg.active && reg.active.scriptURL.endsWith('/sw.js')) {
-        console.log('Unregistering legacy sw.js to avoid duplicate notifications');
+// ── SW — only firebase-messaging-sw.js, unregisters legacy sw.js ──
+async function registerSW(){
+  if(!('serviceWorker' in navigator)) return null;
+  try{
+    const regs=await navigator.serviceWorker.getRegistrations();
+    for(const reg of regs){
+      if(reg.active&&reg.active.scriptURL.endsWith('/sw.js')){
         await reg.unregister();
+        console.log('Unregistered legacy sw.js');
       }
     }
-
-    swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    console.log("✅ Service Worker Registered");
+    swRegistration=await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     await navigator.serviceWorker.ready;
-    console.log("✅ Service Worker Active");
     return swRegistration;
-  } catch (err) {
-    console.error("❌ Service Worker Registration Failed:", err);
-    return null;
+  }catch(err){console.error('SW failed:',err);return null;}
+}
+
+// ── Confetti ──
+function launchConfetti(){
+  const colors=['#b8ff4d','#76f58f','#ff6b6b','#fff','#ffd700'];
+  for(let i=0;i<55;i++){
+    setTimeout(()=>{
+      const el=document.createElement('div');
+      el.className='confetti-piece';
+      el.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*0.4}s;animation-duration:${0.9+Math.random()*0.8}s`;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),2000);
+    },i*18);
   }
 }
 
 // ── Utils ──
-function todayKey(){ return dateKey(new Date()); }
-function dateKey(d){
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function applyHabitLabels(){
-  const word = localStorage.getItem('habitWord') || 'clean';
-  const verb = localStorage.getItem('habitType') === 'break' ? 'broke' : 'did';
-  const cleanLabel = `✓ Stayed ${word}`;
-  const slipLabel = `↺ I ${verb} it`;
-  document.getElementById('checkin-clean').textContent = cleanLabel;
-  document.getElementById('checkin-slip').textContent = slipLabel;
-  document.getElementById('modal-clean').textContent = cleanLabel;
-  document.getElementById('modal-slip').textContent = slipLabel;
-  document.getElementById('commitment-word-preview').textContent = word;
-}
-
-function maybeStartOnboarding(){
-  if(!localStorage.getItem('onboardComplete')){
-    document.getElementById('onboard-screen').style.display='flex';
-    showOnboardStep(1);
-  }
-}
-
-function setHabitType(type){
-  localStorage.setItem('habitType', type);
-  showOnboardStep(2);
-}
-
-function skipHabitWord(){
-  const type = localStorage.getItem('habitType');
-  const defaultWord = type === 'break' ? 'clean' : 'strong';
-  localStorage.setItem('habitWord', defaultWord);
-  applyHabitLabels();
-  document.getElementById('skip-word').style.display='none';
-  const warning = document.getElementById('failure-warning');
-  warning.textContent = 'I am just trolling you.';
-  warning.style.color = 'var(--accent)';
-  setTimeout(()=>{
-    warning.textContent = '';
-    warning.style.color = '#ff8f8f';
-  }, 1800);
-}
-
-function submitHabitWord(){
-  const input = document.getElementById('habit-word');
-  const value = input.value.trim();
-  if(!value){
-    document.getElementById('failure-warning').textContent = 'Type a word before continuing.';
-    return;
-  }
-  localStorage.setItem('habitWord', value);
-  applyHabitLabels();
-  document.getElementById('failure-warning').textContent = '';
-  showOnboardStep(3);
-}
-
-function completeCommitment(){
-  showOnboardStep(4);
-}
-
-let failureAttempts = 0;
-function submitFailureReason(){
-  const reasonEl = document.getElementById('failure-reason');
-  const reason = reasonEl.value.trim();
-  const warning = document.getElementById('failure-warning');
-  if(!reason){
-    warning.textContent = 'Real commitment needs a real reason.';
-    return;
-  }
-  failureAttempts += 1;
-  if(failureAttempts < 4){
-    warning.textContent = [
-      'That reason feels weak. Try again.',
-      'Still not enough. Be honest with yourself.',
-      'This is the last chance. Give it purpose.'
-    ][failureAttempts - 1];
-    warning.classList.add('snap-out');
-    setTimeout(()=>warning.classList.remove('snap-out'), 420);
-    return;
-  }
-  warning.textContent = 'There’s no reason for you to give up. This app will help you.';
-  reasonEl.classList.add('thanos-snap');
-  document.getElementById('skip-reason').classList.add('thanos-snap');
-  setTimeout(()=>{
-    reasonEl.classList.remove('thanos-snap');
-    document.getElementById('skip-reason').classList.remove('thanos-snap');
-    reasonEl.value = '';
-    warning.textContent = '';
-    document.getElementById('onboard-success-copy').textContent = 'You are going to achieve whatever you planned for. Enter the home page and own it.';
-    showOnboardStep(5);
-  }, 780);
-}
-
-function skipFailureReason(){
-  const warning = document.getElementById('failure-warning');
-  warning.textContent = 'Skipping consequence is a choice. Own the outcome.';
-  showOnboardStep(5);
-}
-
-function finishOnboarding(){
-  localStorage.setItem('onboardComplete', 'true');
-  document.getElementById('onboard-screen').style.display='none';
-  toast('Welcome to CleanStreak. Start strong.');
-}
-
-function showOnboardStep(step){
-  document.querySelectorAll('.onboard-step').forEach((el,i)=>{
-    el.classList.toggle('active', i===step-1);
-  });
-}
-
+function todayKey(){return dateKey(new Date());}
+function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function resetData(){
   if(!confirm('Delete ALL streak data?')) return;
-  streakData={};
-  localStorage.removeItem('streakData');
-  if(currentUser) db.collection('streaks').doc(currentUser.uid).collection('days').get()
-    .then(s=>s.forEach(d=>d.ref.delete()));
-  updateUI(); toast('All data reset');
+  streakData={};localStorage.removeItem('streakData');
+  if(currentUser) db.collection('streaks').doc(currentUser.uid).collection('days').get().then(s=>s.forEach(d=>d.ref.delete()));
+  updateUI();toast('All data reset');
 }
 function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2800);
 }
-window.addEventListener("load", async () => {
-  await registerSW();
-});
+window.addEventListener('load',()=>registerSW());
 </script>
 </body>
 </html>

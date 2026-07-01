@@ -751,6 +751,21 @@ async function loadStreak(){
   const snap=await db.collection('streaks').doc(currentUser.uid).collection('days').get();
   streakData={};snap.forEach(d=>{streakData[d.id]=d.data().status;});
   updateUI();
+  loadPrefs();
+}
+
+async function loadPrefs(){
+  if(!currentUser) return;
+  try{
+    const doc=await db.collection('users').doc(currentUser.uid).get();
+    if(doc.exists){
+      const d=doc.data();
+      const schedEl=document.getElementById('tog-schedule');
+      const streakEl=document.getElementById('tog-streak');
+      if(schedEl) schedEl.checked = d.notif_schedule !== false;
+      if(streakEl) streakEl.checked = d.notif_streak !== false;
+    }
+  }catch(e){}
 }
 function loadStreakLocal(){streakData=JSON.parse(localStorage.getItem('streakData')||'{}');updateUI();}
 
